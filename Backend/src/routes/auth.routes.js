@@ -2,7 +2,7 @@ import { Router } from "express";
 import { validateRegister, validateLogin } from "../validators/auth.validator.js";
 import { register, login, googleCallback } from "../controllers/auth.controller.js";
 import passport from "passport";
-import config from "../config/config.js";
+import{ config }from "../config/config.js";
 
 const router = Router();
 

@@ -5,7 +5,7 @@ const client = new ImageKit({
     privateKey: config.IMAGEKIT_PRIVATE_KEY,
 })
 
-export async function uploadFile({buffer, fileName, folder = "Souled Store"}) {
+export async function uploadFile({buffer, fileName, folder = "/Souled-Store"}) {
     const result = await client.files.upload({
         file: await ImageKit.toFile(buffer),
         fileName,
