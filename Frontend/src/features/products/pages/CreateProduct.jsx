@@ -184,7 +184,7 @@ export default function CreateProduct() {
                                         className="flex-1 px-4 py-3.5 text-gray-900 placeholder:text-gray-300 bg-white text-sm font-medium outline-none"
                                     />
                                 </div>
-                                <p className="text-xs text-gray-400">Enter the selling price in US Dollars.</p>
+                                <p className="text-xs text-gray-400">Enter the selling price in INR.</p>
                             </div>
 
                             {/* Mobile-only: Images + Submit stacked below text fields */}
