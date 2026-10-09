@@ -6,7 +6,7 @@ const Dashboard = () => {
 
     const { handleGetSellerProducts } = useProduct()
 
-    const sellerProducts = useSelector((state) => state.products.sellerProducts)
+    const sellerProducts = useSelector((state) => state.product.sellerProducts)
 
     useEffect(() => {
         handleGetSellerProducts()
@@ -19,4 +19,6 @@ const Dashboard = () => {
             Dashboard
         </div>
     )
-} 
+}
+
+export default Dashboard
