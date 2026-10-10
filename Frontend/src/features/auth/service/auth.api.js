@@ -50,3 +50,8 @@ export async function login({
         return { success: false, message: "Network error", field: null };
     }
 }
+
+export async function getMe() {
+    const response = await authApiInstance.get("/me");
+    return response.data;
+}

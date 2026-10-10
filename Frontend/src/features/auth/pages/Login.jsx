@@ -55,12 +55,16 @@ export default function Login() {
                         onSubmit={async (e) => {
                             e.preventDefault();
                             try {
-                                await handleLogin({
+                                const user = await handleLogin({
                                     email: e.target.email.value,
                                     password: e.target.password.value,
                                 })
 
-                                navigate("/")
+                                if (user.isSeller) {
+                                    navigate("/seller/dashboard")
+                                } else {
+                                    navigate("/")
+                                }
                             } catch (error) {
                                 console.error("Login failed:", error)
                             }
