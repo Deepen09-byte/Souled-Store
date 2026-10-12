@@ -8,6 +8,8 @@ const Home = () => {
 
     const { handleGetAllProducts } = useProduct();
 
+    console.log(products)
+
     useEffect(() => {
         handleGetAllProducts()
     }, []);
