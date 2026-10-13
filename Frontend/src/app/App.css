@@ -78,18 +78,20 @@
     vertical-align: middle;
     line-height: 1;
   }
-  
+
   body {
     min-height: max(884px, 100dvh);
     overflow: hidden;
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
-  
+
   ::-webkit-scrollbar {
     display: none;
   }
-  
+
   * {
     scrollbar-width: none;
   }
@@ -98,6 +100,7 @@
 .ambient-glow {
   background: radial-gradient(ellipse 70% 40% at 50% -10%, rgba(245, 158, 11, 0.12), transparent);
 }
+
 .input-focus-glow:focus-within {
   border-color: #f59e0b;
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18), 0 0 20px -3px rgba(245, 158, 11, 0.2);
