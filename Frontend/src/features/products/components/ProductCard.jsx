@@ -2,166 +2,126 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const ProductCard = ({ product }) => {
-    const [currentImage, setCurrentImage] = useState(0);
-    const [isHovered, setIsHovered] = useState(false);
-
     const navigate = useNavigate();
-    const images = product?.images || [];
-    const price = product?.price?.amount ?? 0;
-    const currency = product?.price?.currency ?? 'INR';
+    const [currentImage, setCurrentImage] = useState(0);
+    const [hovered, setHovered] = useState(false);
+    const [wishlisted, setWishlisted] = useState(false);
 
+    const images = product?.images || [];
     const formattedPrice = new Intl.NumberFormat('en-IN', {
         style: 'currency',
-        currency: currency,
+        currency: product?.price?.currency || 'INR',
         maximumFractionDigits: 0,
-    }).format(price);
+    }).format(product?.price?.amount ?? 0);
 
     const handleMouseEnter = () => {
-        setIsHovered(true);
-        if (images.length > 1) {
-            setCurrentImage(1);
-        }
+        setHovered(true);
+        if (images.length > 1) setCurrentImage(1);
     };
 
     const handleMouseLeave = () => {
-        setIsHovered(false);
+        setHovered(false);
         setCurrentImage(0);
     };
 
     return (
         <div
-
+            className="group cursor-pointer"
             onClick={() => navigate(`/product/${product?._id}`)}
-
-            className="group relative flex flex-col rounded-2xl overflow-hidden cursor-pointer"
-            style={{
-                background: 'var(--color-surface-container)',
-                border: '1px solid var(--color-outline-variant)',
-                transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease',
-                transform: isHovered ? 'translateY(-6px)' : 'translateY(0)',
-                boxShadow: isHovered
-                    ? '0 20px 40px -8px rgba(0,0,0,0.5), 0 0 0 1px rgba(245,158,11,0.3), 0 0 30px -5px rgba(245,158,11,0.15)'
-                    : '0 4px 12px -2px rgba(0,0,0,0.3)',
-            }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
-            {/* Image Container */}
-            <div className="relative overflow-hidden" style={{ aspectRatio: '3/4', background: 'var(--color-surface-container-low)' }}>
+            {/* Image wrapper */}
+            <div
+                className="relative overflow-hidden"
+                style={{ aspectRatio: '3/4', background: 'var(--color-surface-container)' }}
+            >
                 {images.length > 0 ? (
                     <img
                         src={images[currentImage]?.url || images[0]?.url}
                         alt={product?.title}
-                        className="w-full h-full object-cover"
-                        style={{
-                            transition: 'transform 0.5s ease, opacity 0.3s ease',
-                            transform: isHovered ? 'scale(1.06)' : 'scale(1)',
-                        }}
+                        className="w-full h-full object-cover transition-all duration-700"
+                        style={{ transform: hovered ? 'scale(1.04)' : 'scale(1)' }}
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                        <span className="material-symbols-outlined text-6xl" style={{ color: 'var(--color-outline)' }}>
+                        <span
+                            className="material-symbols-outlined"
+                            style={{ fontSize: '40px', color: 'var(--color-outline)', fontVariationSettings: "'wght' 200" }}
+                        >
                             image
                         </span>
                     </div>
                 )}
 
-                {/* Gradient overlay */}
-                <div
-                    className="absolute inset-0"
+                {/* Wishlist button */}
+                <button
+                    className="absolute top-3 right-3 flex items-center justify-center transition-all duration-200"
                     style={{
-                        background: 'linear-gradient(to top, rgba(19,19,21,0.7) 0%, transparent 50%)',
-                        opacity: isHovered ? 1 : 0,
-                        transition: 'opacity 0.3s ease',
+                        width: '32px',
+                        height: '32px',
+                        background: 'rgba(253,252,250,0.85)',
+                        backdropFilter: 'blur(4px)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        opacity: hovered || wishlisted ? 1 : 0,
+                        transform: hovered || wishlisted ? 'translateY(0)' : 'translateY(-6px)',
+                        color: wishlisted ? '#B91C1C' : 'var(--color-on-surface)',
                     }}
-                />
-
-                {/* Image dots */}
-                {images.length > 1 && (
-                    <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
-                        {images.map((_, idx) => (
-                            <button
-                                key={idx}
-                                onClick={(e) => { e.stopPropagation(); setCurrentImage(idx); }}
-                                className="rounded-full transition-all duration-200"
-                                style={{
-                                    width: currentImage === idx ? '16px' : '6px',
-                                    height: '6px',
-                                    background: currentImage === idx ? 'var(--color-primary)' : 'rgba(255,255,255,0.4)',
-                                }}
-                            />
-                        ))}
-                    </div>
-                )}
-
-                {/* Quick add badge on hover */}
-                <div
-                    className="absolute top-3 right-3 flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold"
-                    style={{
-                        background: 'var(--color-primary)',
-                        color: 'var(--color-on-primary)',
-                        opacity: isHovered ? 1 : 0,
-                        transform: isHovered ? 'translateY(0)' : 'translateY(-8px)',
-                        transition: 'opacity 0.2s ease, transform 0.2s ease',
-                        fontFamily: 'var(--font-label-sm)',
-                    }}
+                    onClick={(e) => { e.stopPropagation(); setWishlisted(!wishlisted); }}
+                    aria-label="Toggle wishlist"
                 >
-                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>add_shopping_cart</span>
-                    Quick Add
+                    <span
+                        className="material-symbols-outlined"
+                        style={{ fontSize: '16px', fontVariationSettings: wishlisted ? "'FILL' 1, 'wght' 400" : "'FILL' 0, 'wght' 300" }}
+                    >
+                        favorite
+                    </span>
+                </button>
+
+                {/* Quick shop bar on hover */}
+                <div
+                    className="absolute bottom-0 left-0 right-0 flex items-center justify-center py-3 transition-all duration-300"
+                    style={{
+                        background: 'rgba(253,252,250,0.92)',
+                        backdropFilter: 'blur(4px)',
+                        opacity: hovered ? 1 : 0,
+                        transform: hovered ? 'translateY(0)' : 'translateY(8px)',
+                        fontFamily: 'var(--font-sans)',
+                        fontSize: '0.6875rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: 'var(--color-on-surface)',
+                    }}
+                    onClick={(e) => { e.stopPropagation(); navigate(`/product/${product?._id}`); }}
+                >
+                    View Product
                 </div>
             </div>
 
-            {/* Card Content */}
-            <div className="flex flex-col gap-1 p-4">
+            {/* Info */}
+            <div className="mt-3 space-y-1">
                 <h3
-                    className="text-sm font-semibold leading-tight line-clamp-2"
+                    className="text-sm leading-snug capitalize"
                     style={{
+                        fontFamily: 'var(--font-sans)',
+                        fontWeight: 400,
                         color: 'var(--color-on-surface)',
-                        fontFamily: 'var(--font-body-md)',
-                        textTransform: 'capitalize',
+                        overflow: 'hidden',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
                     }}
                 >
                     {product?.title}
                 </h3>
-
                 <p
-                    className="text-xs line-clamp-1 mt-0.5"
-                    style={{
-                        color: 'var(--color-on-surface-variant)',
-                        fontFamily: 'var(--font-body-sm)',
-                    }}
+                    className="text-sm"
+                    style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--color-on-surface-variant)' }}
                 >
-                    {product?.description}
+                    {formattedPrice}
                 </p>
-
-                <div className="flex items-center justify-between mt-2">
-                    <span
-                        className="text-base font-bold"
-                        style={{
-                            color: 'var(--color-primary)',
-                            fontFamily: 'var(--font-label-md)',
-                        }}
-                    >
-                        {formattedPrice}
-                    </span>
-
-                    <button
-                        className="flex items-center justify-center rounded-xl transition-all duration-200"
-                        style={{
-                            width: '36px',
-                            height: '36px',
-                            background: isHovered ? 'var(--color-primary)' : 'var(--color-surface-container-high)',
-                            color: isHovered ? 'var(--color-on-primary)' : 'var(--color-on-surface-variant)',
-                            border: '1px solid',
-                            borderColor: isHovered ? 'transparent' : 'var(--color-outline-variant)',
-                        }}
-                        aria-label="Add to wishlist"
-                    >
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                            favorite
-                        </span>
-                    </button>
-                </div>
             </div>
         </div>
     );
