@@ -81,7 +81,6 @@
 
   body {
     min-height: max(884px, 100dvh);
-    overflow: hidden;
     -ms-overflow-style: none;
     /* IE and Edge */
     scrollbar-width: none;
