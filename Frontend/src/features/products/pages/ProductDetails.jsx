@@ -1,6 +1,61 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useMemo } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { useProduct } from "../hook/useProducts"
+
+// ─── Color Swatch Palette Map ──────────────────────────────────────
+const COLOR_HEX_MAP = {
+    terracotta: '#C2410C',
+    sandstone: '#D4C3AC',
+    'midnight black': '#1A1714',
+    black: '#1A1714',
+    'heather grey': '#9E9E9C',
+    grey: '#9E9E9C',
+    gray: '#9E9E9C',
+    espresso: '#3B2F2F',
+    brown: '#5C4033',
+    'vintage olive': '#555B49',
+    olive: '#555B49',
+    green: '#15803D',
+    'pure white': '#FDFCFA',
+    white: '#FFFFFF',
+    'navy blue': '#1E293B',
+    navy: '#1E293B',
+    blue: '#2563EB',
+    red: '#DC2626',
+    beige: '#F5F5DC',
+    cream: '#FFFDD0',
+    charcoal: '#333333',
+    maroon: '#800000',
+    yellow: '#FACC15',
+    orange: '#EA580C',
+    pink: '#EC4899',
+    purple: '#9333EA',
+};
+
+function getColorHex(colorName) {
+    if (!colorName) return '#DDD6CB';
+    const lower = String(colorName).toLowerCase().trim();
+    return COLOR_HEX_MAP[lower] || '#8B7355';
+}
+
+// ─── Attribute Object Safe Extraction ──────────────────────────────
+function getAttributesObject(attributes) {
+    if (!attributes) return {};
+    if (attributes instanceof Map) {
+        return Object.fromEntries(attributes);
+    }
+    if (typeof attributes === 'object') {
+        if (typeof attributes.get === 'function') {
+            const obj = {};
+            for (const [k, v] of attributes.entries()) {
+                obj[k] = v;
+            }
+            return obj;
+        }
+        return attributes;
+    }
+    return {};
+}
 
 // ─── Navbar ────────────────────────────────────────────────────────
 const Navbar = () => {
@@ -64,6 +119,11 @@ const ImageGallery = ({ images, title }) => {
     const [selected, setSelected] = useState(0);
     const [lightboxOpen, setLightboxOpen] = useState(false);
 
+    // Reset selected image when images array changes (e.g. variant switched)
+    useEffect(() => {
+        setSelected(0);
+    }, [images]);
+
     if (!images || images.length === 0) {
         return (
             <div
@@ -75,22 +135,24 @@ const ImageGallery = ({ images, title }) => {
         );
     }
 
+    const currentImg = images[selected] || images[0];
+
     return (
         <div className="flex flex-col gap-3">
             {/* Main image */}
             <div
-                className="relative overflow-hidden cursor-zoom-in"
+                className="relative overflow-hidden cursor-zoom-in rounded-lg"
                 style={{ aspectRatio: '3/4', background: 'var(--color-surface-container)' }}
                 onClick={() => setLightboxOpen(true)}
             >
                 <img
-                    src={images[selected]?.url}
+                    src={currentImg?.url}
                     alt={title}
                     className="w-full h-full object-cover transition-all duration-500 hover:scale-[1.03]"
                 />
                 {/* Counter */}
                 <div
-                    className="absolute bottom-4 right-4 label-caps"
+                    className="absolute bottom-4 right-4 label-caps rounded"
                     style={{
                         background: 'rgba(253,252,250,0.85)',
                         backdropFilter: 'blur(4px)',
@@ -110,7 +172,7 @@ const ImageGallery = ({ images, title }) => {
                         <button
                             key={idx}
                             onClick={() => setSelected(idx)}
-                            className="overflow-hidden transition-all duration-200"
+                            className="overflow-hidden transition-all duration-200 rounded"
                             style={{
                                 aspectRatio: '1/1',
                                 border: 'none',
@@ -143,7 +205,7 @@ const ImageGallery = ({ images, title }) => {
                         <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>close</span>
                     </button>
                     <img
-                        src={images[selected]?.url}
+                        src={currentImg?.url}
                         alt={title}
                         className="max-w-full max-h-[90vh] object-contain"
                         onClick={(e) => e.stopPropagation()}
@@ -214,36 +276,142 @@ const ProductDetails = () => {
     const [error, setError] = useState(false);
     const [wishlisted, setWishlisted] = useState(false);
     const [addedToCart, setAddedToCart] = useState(false);
-    const [selectedSize, setSelectedSize] = useState(null);
+
+    // Selected attributes map: e.g. { size: 'XL', color: 'Terracotta' }
+    const [selectedAttributes, setSelectedAttributes] = useState({});
 
     const { handleGetProductById } = useProduct();
-
-    const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
     useEffect(() => {
         setLoading(true);
         setError(false);
         handleGetProductById(id)
-            .then((data) => { setProduct(data); setLoading(false); })
-            .catch(() => { setError(true); setLoading(false); });
+            .then((data) => {
+                setProduct(data);
+                setLoading(false);
+            })
+            .catch(() => {
+                setError(true);
+                setLoading(false);
+            });
     }, [id]);
 
-    const handleAddToCart = () => {
-        setAddedToCart(true);
-        setTimeout(() => setAddedToCart(false), 2000);
+    // Discover all available attribute keys and values from product variants
+    const variantAttributes = useMemo(() => {
+        const attrMap = {};
+        (product?.variants || []).forEach(v => {
+            const attrs = getAttributesObject(v.attributes);
+            Object.entries(attrs).forEach(([key, val]) => {
+                if (!val) return;
+                const normKey = key.trim().toLowerCase();
+                if (!attrMap[normKey]) {
+                    attrMap[normKey] = {
+                        displayKey: key.trim(),
+                        values: new Set(),
+                    };
+                }
+                attrMap[normKey].values.add(String(val).trim());
+            });
+        });
+
+        const result = {};
+        Object.entries(attrMap).forEach(([normKey, data]) => {
+            result[normKey] = {
+                displayKey: data.displayKey,
+                values: Array.from(data.values),
+            };
+        });
+        return result;
+    }, [product]);
+
+    // Sizes available: combination of variant sizes and standard sizes
+    const availableSizes = useMemo(() => {
+        if (variantAttributes['size']?.values?.length > 0) {
+            const vSizes = variantAttributes['size'].values;
+            const standard = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+            const merged = Array.from(new Set([...vSizes, ...standard]));
+            return merged;
+        }
+        return ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+    }, [variantAttributes]);
+
+    // Matching Variant Logic:
+    // If ANY attribute combination is not there, activeVariant is null (main product is selected)
+    const activeVariant = useMemo(() => {
+        if (!product?.variants || product.variants.length === 0) return null;
+
+        const selectedEntries = Object.entries(selectedAttributes).filter(([_, val]) => Boolean(val));
+        if (selectedEntries.length === 0) return null;
+
+        return product.variants.find(v => {
+            const vAttrs = getAttributesObject(v.attributes);
+            const vEntries = Object.entries(vAttrs);
+            if (vEntries.length === 0) return false;
+
+            // 1. Every attribute in the variant must match the selected attributes
+            const allVariantAttrsMatch = vEntries.every(([vKey, vVal]) => {
+                const selectedVal = selectedAttributes[vKey.toLowerCase()];
+                return selectedVal && selectedVal.toLowerCase() === String(vVal).trim().toLowerCase();
+            });
+
+            // 2. Every selected attribute must be present in the variant and match
+            const allSelectedAttrsMatch = selectedEntries.every(([sKey, sVal]) => {
+                const vVal = Object.entries(vAttrs).find(([vk]) => vk.toLowerCase() === sKey.toLowerCase())?.[1];
+                return vVal && String(vVal).trim().toLowerCase() === String(sVal).trim().toLowerCase();
+            });
+
+            return allVariantAttrsMatch && allSelectedAttrsMatch;
+        }) || null;
+    }, [product, selectedAttributes]);
+
+    // Toggle attribute selection
+    const toggleAttribute = (key, value) => {
+        const normKey = key.toLowerCase();
+        setSelectedAttributes(prev => {
+            if (prev[normKey]?.toLowerCase() === String(value).toLowerCase()) {
+                // Clicking active value unselects it
+                const copy = { ...prev };
+                delete copy[normKey];
+                return copy;
+            }
+            return {
+                ...prev,
+                [normKey]: value,
+            };
+        });
     };
 
-    const formattedPrice = product
-        ? new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: product.price?.currency || 'INR',
-            maximumFractionDigits: 0,
-        }).format(product.price?.amount ?? 0)
-        : '';
+    // Images to display: variant images if active, else master product images
+    const activeImages = useMemo(() => {
+        if (activeVariant?.images && activeVariant.images.length > 0) {
+            return activeVariant.images;
+        }
+        return product?.images || [];
+    }, [activeVariant, product]);
+
+    // Active Price
+    const currentPrice = activeVariant?.price?.amount ?? product?.price?.amount ?? 0;
+    const currentCurrency = activeVariant?.price?.currency || product?.price?.currency || 'INR';
+
+    const formattedPrice = new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: currentCurrency,
+        maximumFractionDigits: 0,
+    }).format(currentPrice);
 
     const formattedDate = product?.createdAt
         ? new Date(product.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
         : '';
+
+    const hasSelectedAttributes = Object.values(selectedAttributes).some(Boolean);
+    const isVariantActive = Boolean(activeVariant);
+    const isOutOfStock = isVariantActive && activeVariant.stock === 0;
+
+    const handleAddToCart = () => {
+        if (isOutOfStock) return;
+        setAddedToCart(true);
+        setTimeout(() => setAddedToCart(false), 2000);
+    };
 
     if (loading) return <><Navbar /><DetailsSkeleton /></>;
 
@@ -258,7 +426,7 @@ const ProductDetails = () => {
                 </p>
                 <button
                     onClick={() => navigate('/')}
-                    className="btn-dark px-8 py-4"
+                    className="btn-dark px-8 py-4 rounded"
                 >
                     Back to Home
                 </button>
@@ -275,17 +443,26 @@ const ProductDetails = () => {
                 {/* ── Product Section ── */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
 
-                    {/* LEFT: Gallery */}
+                    {/* LEFT: Gallery (Switches seamlessly to variant images when matched) */}
                     <div>
-                        <ImageGallery images={product.images} title={product.title} />
+                        <ImageGallery images={activeImages} title={product.title} />
                     </div>
 
                     {/* RIGHT: Info */}
                     <div className="flex flex-col gap-6 lg:pt-2">
 
-                        {/* Tag + Title */}
+                        {/* Tag + Title + Variant Indicator */}
                         <div>
-                            <p className="label-caps mb-3" style={{ color: 'var(--color-secondary)' }}>New Arrival</p>
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="label-caps" style={{ color: 'var(--color-secondary)' }}>
+                                    {isVariantActive ? 'Variant Selected' : 'New Arrival'}
+                                </span>
+                                <span className="text-[#DDD6CB]">•</span>
+                                <span className="label-caps" style={{ color: isVariantActive ? '#15803D' : 'var(--color-on-surface-variant)' }}>
+                                    {isVariantActive ? 'Custom SKU' : 'Main Product'}
+                                </span>
+                            </div>
+
                             <h1
                                 className="text-3xl md:text-4xl lg:text-5xl leading-tight capitalize"
                                 style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, color: 'var(--color-on-surface)', letterSpacing: '-0.01em' }}
@@ -294,8 +471,8 @@ const ProductDetails = () => {
                             </h1>
                         </div>
 
-                        {/* Price */}
-                        <div className="flex items-baseline gap-3">
+                        {/* Price & Stock Indicator */}
+                        <div className="flex flex-wrap items-baseline gap-3">
                             <span
                                 className="text-2xl md:text-3xl"
                                 style={{ fontFamily: 'var(--font-sans)', fontWeight: 400, color: 'var(--color-on-surface)' }}
@@ -303,7 +480,50 @@ const ProductDetails = () => {
                                 {formattedPrice}
                             </span>
                             <span className="label-caps" style={{ color: 'var(--color-outline)' }}>incl. taxes</span>
+
+                            {isVariantActive && (
+                                <span className="ml-auto inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-semibold tracking-wider uppercase border border-emerald-200 bg-emerald-50 text-emerald-800">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                    {activeVariant.stock > 0 ? `${activeVariant.stock} in stock` : 'Out of Stock'}
+                                </span>
+                            )}
                         </div>
+
+                        {/* Active Selection Status Banner */}
+                        {hasSelectedAttributes && (
+                            <div
+                                className="p-3 rounded-lg border flex items-center justify-between text-xs transition-all"
+                                style={{
+                                    backgroundColor: isVariantActive ? 'rgba(240, 253, 244, 0.9)' : 'rgba(254, 243, 199, 0.5)',
+                                    borderColor: isVariantActive ? '#BBF7D0' : '#FDE68A',
+                                }}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-sm" style={{ color: isVariantActive ? '#15803D' : '#B45309' }}>
+                                        {isVariantActive ? 'check_circle' : 'info'}
+                                    </span>
+                                    <span style={{ color: isVariantActive ? '#166534' : '#92400E' }}>
+                                        {isVariantActive ? (
+                                            <>
+                                                Active Variant: <strong>{Object.values(getAttributesObject(activeVariant.attributes)).join(' · ')}</strong>
+                                            </>
+                                        ) : (
+                                            <>
+                                                Combination not in variant matrix — <strong>Main product selected</strong>
+                                            </>
+                                        )}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedAttributes({})}
+                                    className="font-medium underline cursor-pointer text-[11px]"
+                                    style={{ color: isVariantActive ? '#166534' : '#92400E' }}
+                                >
+                                    Reset to Main
+                                </button>
+                            </div>
+                        )}
 
                         {/* Divider */}
                         <div className="divider" />
@@ -319,10 +539,129 @@ const ProductDetails = () => {
                             </p>
                         </div>
 
-                        {/* Size selector */}
+                        {/* ── Configured Variants Direct Quick-Pills (if variants exist) ── */}
+                        {product.variants?.length > 0 && (
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <p className="label-caps" style={{ color: 'var(--color-on-surface-variant)' }}>
+                                        Configured Variants ({product.variants.length})
+                                    </p>
+                                    {isVariantActive && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedAttributes({})}
+                                            className="label-caps text-[10px] underline"
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-secondary)' }}
+                                        >
+                                            View Main Product
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {product.variants.map((v, i) => {
+                                        const attrs = getAttributesObject(v.attributes);
+                                        const isThisVariantActive = activeVariant?._id === v._id;
+                                        const label = Object.entries(attrs).map(([_, val]) => val).join(' · ') || `Variant #${i + 1}`;
+                                        const vPrice = v.price?.amount ? `₹${v.price.amount}` : '';
+                                        const colorAttr = attrs.color || attrs.Color;
+
+                                        return (
+                                            <button
+                                                key={v._id || i}
+                                                type="button"
+                                                onClick={() => {
+                                                    if (isThisVariantActive) {
+                                                        setSelectedAttributes({});
+                                                    } else {
+                                                        const lowerMap = {};
+                                                        Object.entries(attrs).forEach(([k, val]) => {
+                                                            lowerMap[k.toLowerCase()] = val;
+                                                        });
+                                                        setSelectedAttributes(lowerMap);
+                                                    }
+                                                }}
+                                                className="transition-all duration-200 label-caps px-3 py-2 flex items-center gap-1.5 cursor-pointer rounded"
+                                                style={{
+                                                    fontSize: '0.65rem',
+                                                    border: isThisVariantActive ? '1px solid var(--color-on-surface)' : '1px solid var(--color-outline-variant)',
+                                                    background: isThisVariantActive ? 'var(--color-on-surface)' : 'transparent',
+                                                    color: isThisVariantActive ? 'var(--color-on-primary)' : 'var(--color-on-surface)',
+                                                }}
+                                            >
+                                                {colorAttr && (
+                                                    <span
+                                                        className="w-2.5 h-2.5 rounded-full border border-black/10 inline-block shrink-0"
+                                                        style={{ backgroundColor: getColorHex(colorAttr) }}
+                                                    />
+                                                )}
+                                                <span>{label}</span>
+                                                {vPrice && (
+                                                    <span style={{ opacity: isThisVariantActive ? 0.9 : 0.6 }}>
+                                                        ({vPrice})
+                                                    </span>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ── Color Selector (if colors exist in variants) ── */}
+                        {variantAttributes['color'] && (
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <p className="label-caps" style={{ color: 'var(--color-on-surface-variant)' }}>
+                                        Select Color {selectedAttributes['color'] ? `— ${selectedAttributes['color']}` : ''}
+                                    </p>
+                                    {selectedAttributes['color'] && (
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleAttribute('color', selectedAttributes['color'])}
+                                            className="label-caps"
+                                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-outline)', textDecoration: 'underline', fontSize: '0.6rem' }}
+                                        >
+                                            Clear Color
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex flex-wrap gap-2.5">
+                                    {variantAttributes['color'].values.map((colName) => {
+                                        const isSelected = selectedAttributes['color']?.toLowerCase() === colName.toLowerCase();
+                                        return (
+                                            <button
+                                                key={colName}
+                                                type="button"
+                                                onClick={() => toggleAttribute('color', colName)}
+                                                className="transition-all duration-200 flex items-center gap-2 px-3 py-2 rounded cursor-pointer label-caps"
+                                                style={{
+                                                    border: isSelected ? '1px solid var(--color-on-surface)' : '1px solid var(--color-outline-variant)',
+                                                    background: isSelected ? 'var(--color-on-surface)' : 'transparent',
+                                                    color: isSelected ? 'var(--color-on-primary)' : 'var(--color-on-surface)',
+                                                    fontSize: '0.6875rem'
+                                                }}
+                                            >
+                                                <span
+                                                    className="w-3.5 h-3.5 rounded-full border border-black/15 shadow-xs shrink-0"
+                                                    style={{ backgroundColor: getColorHex(colName) }}
+                                                />
+                                                <span>{colName}</span>
+                                                {isSelected && (
+                                                    <span className="material-symbols-outlined text-xs">check</span>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ── Size Selector ── */}
                         <div>
                             <div className="flex items-center justify-between mb-3">
-                                <p className="label-caps" style={{ color: 'var(--color-on-surface-variant)' }}>Select Size</p>
+                                <p className="label-caps" style={{ color: 'var(--color-on-surface-variant)' }}>
+                                    Select Size {selectedAttributes['size'] ? `— ${selectedAttributes['size']}` : ''}
+                                </p>
                                 <button
                                     className="label-caps"
                                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-outline)', textDecoration: 'underline', fontSize: '0.6rem' }}
@@ -331,56 +670,108 @@ const ProductDetails = () => {
                                 </button>
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                {sizes.map((size) => (
-                                    <button
-                                        key={size}
-                                        onClick={() => setSelectedSize(size)}
-                                        className="transition-all duration-200 label-caps"
-                                        style={{
-                                            width: '48px',
-                                            height: '48px',
-                                            border: selectedSize === size ? '1px solid var(--color-on-surface)' : '1px solid var(--color-outline-variant)',
-                                            background: selectedSize === size ? 'var(--color-on-surface)' : 'transparent',
-                                            color: selectedSize === size ? 'var(--color-on-primary)' : 'var(--color-on-surface-variant)',
-                                            cursor: 'pointer',
-                                        }}
-                                    >
-                                        {size}
-                                    </button>
-                                ))}
+                                {availableSizes.map((size) => {
+                                    const isSelected = selectedAttributes['size']?.toLowerCase() === size.toLowerCase();
+                                    const isVariantSize = variantAttributes['size']?.values?.some(s => s.toLowerCase() === size.toLowerCase());
+
+                                    return (
+                                        <button
+                                            key={size}
+                                            type="button"
+                                            onClick={() => toggleAttribute('size', size)}
+                                            className="transition-all duration-200 label-caps relative"
+                                            style={{
+                                                width: '48px',
+                                                height: '48px',
+                                                border: isSelected ? '1px solid var(--color-on-surface)' : '1px solid var(--color-outline-variant)',
+                                                background: isSelected ? 'var(--color-on-surface)' : 'transparent',
+                                                color: isSelected ? 'var(--color-on-primary)' : 'var(--color-on-surface-variant)',
+                                                cursor: 'pointer',
+                                            }}
+                                        >
+                                            {size}
+                                            {isVariantSize && !isSelected && (
+                                                <span
+                                                    className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#8B7355]"
+                                                    title="Variant available in this size"
+                                                />
+                                            )}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
+
+                        {/* ── Other Custom Attributes (e.g. Material, Fit) ── */}
+                        {Object.entries(variantAttributes)
+                            .filter(([normKey]) => normKey !== 'size' && normKey !== 'color')
+                            .map(([normKey, data]) => (
+                                <div key={normKey}>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="label-caps" style={{ color: 'var(--color-on-surface-variant)' }}>
+                                            Select {data.displayKey} {selectedAttributes[normKey] ? `— ${selectedAttributes[normKey]}` : ''}
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {data.values.map((val) => {
+                                            const isSelected = selectedAttributes[normKey]?.toLowerCase() === val.toLowerCase();
+                                            return (
+                                                <button
+                                                    key={val}
+                                                    type="button"
+                                                    onClick={() => toggleAttribute(normKey, val)}
+                                                    className="transition-all duration-200 label-caps px-4 py-2.5 cursor-pointer rounded"
+                                                    style={{
+                                                        border: isSelected ? '1px solid var(--color-on-surface)' : '1px solid var(--color-outline-variant)',
+                                                        background: isSelected ? 'var(--color-on-surface)' : 'transparent',
+                                                        color: isSelected ? 'var(--color-on-primary)' : 'var(--color-on-surface-variant)',
+                                                        fontSize: '0.6875rem'
+                                                    }}
+                                                >
+                                                    {val}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))
+                        }
 
                         {/* CTA Buttons */}
                         <div className="grid grid-cols-2 gap-4 mt-2">
                             {/* Add to Cart */}
                             <button
                                 id="btn-add-to-cart"
+                                type="button"
                                 onClick={handleAddToCart}
-                                className="btn-ghost py-4 flex items-center justify-center gap-2 transition-all duration-200"
+                                disabled={isOutOfStock}
+                                className="btn-ghost py-4 flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                                 style={{
                                     background: addedToCart ? 'var(--color-on-surface)' : 'transparent',
                                     color: addedToCart ? 'var(--color-on-primary)' : 'var(--color-on-surface)',
                                 }}
                             >
                                 <span className="material-symbols-outlined" style={{ fontSize: '16px', fontVariationSettings: "'wght' 300" }}>
-                                    {addedToCart ? 'check' : 'shopping_cart'}
+                                    {addedToCart ? 'check' : isOutOfStock ? 'block' : 'shopping_cart'}
                                 </span>
-                                {addedToCart ? 'Added' : 'Add to Cart'}
+                                {addedToCart ? 'Added to Bag' : isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
                             </button>
 
                             {/* Buy Now */}
                             <button
                                 id="btn-buy-now"
-                                className="btn-dark py-4 flex items-center justify-center gap-2"
+                                type="button"
+                                disabled={isOutOfStock}
+                                className="btn-dark py-4 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                                 <span className="material-symbols-outlined" style={{ fontSize: '16px', fontVariationSettings: "'wght' 300" }}>bolt</span>
-                                Buy Now
+                                {isOutOfStock ? 'Unavailable' : 'Buy Now'}
                             </button>
                         </div>
 
                         {/* Wishlist */}
                         <button
+                            type="button"
                             onClick={() => setWishlisted(!wishlisted)}
                             className="flex items-center justify-center gap-2 py-3 label-caps transition-all duration-200"
                             style={{
@@ -405,10 +796,10 @@ const ProductDetails = () => {
                         {/* Features grid */}
                         <div className="grid grid-cols-2 gap-y-5 gap-x-8">
                             {[
-                                { icon: 'local_shipping', title: 'Free Delivery',  sub: 'On orders above ₹999' },
-                                { icon: 'autorenew',      title: 'Easy Returns',   sub: '7-day return policy' },
-                                { icon: 'verified',       title: '100% Authentic', sub: 'Genuine product' },
-                                { icon: 'payments',       title: 'Secure Pay',     sub: 'UPI · Cards · Wallets' },
+                                { icon: 'local_shipping', title: 'Free Delivery', sub: 'On orders above ₹999' },
+                                { icon: 'autorenew', title: 'Easy Returns', sub: '7-day return policy' },
+                                { icon: 'verified', title: '100% Authentic', sub: 'Genuine product' },
+                                { icon: 'payments', title: 'Secure Pay', sub: 'UPI · Cards · Wallets' },
                             ].map((item) => (
                                 <div key={item.title} className="flex items-start gap-3">
                                     <span
@@ -441,8 +832,14 @@ const ProductDetails = () => {
                                 Listed on {formattedDate}
                             </p>
                             <p className="text-xs font-mono" style={{ color: 'var(--color-outline)' }}>
-                                SKU: {product._id?.slice(-8).toUpperCase()}
+                                SKU: {activeVariant ? activeVariant._id?.slice(-8).toUpperCase() : product._id?.slice(-8).toUpperCase()}
+                                {activeVariant && <span className="ml-2 font-sans font-medium text-emerald-700">(Variant Item)</span>}
                             </p>
+                            {isVariantActive && (
+                                <p className="text-xs" style={{ color: 'var(--color-secondary)' }}>
+                                    Live Variant Inventory: <strong>{activeVariant.stock ?? 0} units</strong>
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -465,7 +862,7 @@ const ProductDetails = () => {
                         {[...Array(4)].map((_, i) => (
                             <div key={i} className="space-y-2">
                                 <div
-                                    className="animate-pulse"
+                                    className="animate-pulse rounded"
                                     style={{ aspectRatio: '3/4', background: 'var(--color-surface-container)' }}
                                 />
                                 <div className="h-3 animate-pulse rounded" style={{ background: 'var(--color-surface-container)', width: '65%' }} />
