@@ -32,3 +32,22 @@ export async function getProductById(id) {
 
     return response.data;
 }
+
+export async function addProductVariant(productId, variantData) {
+    // If variantData is FormData (for files) or regular object
+    const headers = variantData instanceof FormData 
+        ? { "Content-Type": "multipart/form-data" } 
+        : { "Content-Type": "application/json" };
+    const response = await productApiInstance.post(`/${productId}/variants`, variantData, { headers });
+    return response.data;
+}
+
+export async function updateVariantStock(productId, variantId, stock) {
+    const response = await productApiInstance.patch(`/${productId}/variants/${variantId}/stock`, { stock });
+    return response.data;
+}
+
+export async function deleteVariant(productId, variantId) {
+    const response = await productApiInstance.delete(`/${productId}/variants/${variantId}`);
+    return response.data;
+}
