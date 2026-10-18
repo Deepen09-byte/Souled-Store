@@ -35,11 +35,11 @@ export default function Dashboard() {
             <header className="bg-white border-b border-gray-100 sticky top-0 z-20">
                 <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <span className="font-bold text-gray-900 text-lg tracking-tight">Snitch</span>
+                        <span className="   text-gray-900 text-lg tracking-tight font-serif">Souled Store</span>
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 text-gray-300">
                             <path d="M9 18l6-6-6-6" />
                         </svg>
-                        <span className="text-sm font-semibold text-amber-500">Seller Dashboard</span>
+                        <span className="text-sm font-semibold text-amber-500">Dashboard</span>
                     </div>
                     <button
                         id="create_product_btn"
@@ -177,10 +177,14 @@ function ProductCard({ product }) {
     const coverImage = product.images?.[0]?.url;
     const price = product.price?.amount;
     const currency = product.price?.currency || "INR";
+    const navigate = useNavigate();
 
     return (
-        <div className="group bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+        <div
+            onClick={() => navigate(`/seller/product/${product._id}`)}
+            className="group bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
             {/* Image */}
+
             <div className="relative aspect-square bg-gray-100 overflow-hidden">
                 {coverImage ? (
                     <img

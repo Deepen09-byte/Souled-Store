@@ -1,5 +1,6 @@
 import React from "react";
 import { useSelector } from "react-redux";
+import { Navigate } from "react-router";
 
 const Protected = ({ children, role = "buyer" }) => {
 
@@ -14,11 +15,11 @@ const Protected = ({ children, role = "buyer" }) => {
         return <Navigate to="/login" />;
     }
 
-    if (role === "seller" && !user.isSeller) {
+    if (role === "buyer" && !user.isSeller) {
         return <Navigate to="/" />;
     }
     return (
-        { children }
+        children
     );
 
 }
