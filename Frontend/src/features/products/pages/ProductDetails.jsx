@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { useProduct } from "../hook/useProducts"
-import { useCart } from "../cart/hook/useCart";
+import { useCart } from "../../cart/hook/useCart";
 
 // ─── Color Swatch Palette Map ──────────────────────────────────────
 const COLOR_HEX_MAP = {
@@ -409,8 +409,19 @@ const ProductDetails = () => {
     const isVariantActive = Boolean(activeVariant);
     const isOutOfStock = isVariantActive && activeVariant.stock === 0;
 
-    const handleAddToCart = () => {
-        if (isOutOfStock) return;
+    const handleAddToCart = async () => {
+        // If the product has variants and none is selected, require variant selection
+        if (product.variants?.length > 0 && !activeVariant) {
+            alert("Please select a variant / size before adding to cart");
+            return;
+        }
+
+        if (isOutOfStock) {
+            alert("Selected variant is out of stock");
+            return;
+        }
+
+        await handleAddItem(product._id, activeVariant?._id);
         setAddedToCart(true);
         setTimeout(() => setAddedToCart(false), 2000);
     };
@@ -745,13 +756,7 @@ const ProductDetails = () => {
                             <button
                                 id="btn-add-to-cart"
                                 type="button"
-                                onClick={() => handleAddToCart({
-                                    productId: product._id,
-                                    variantId: variantId,
-                                    setAddedToCart,
-                                    addedToCart,
-                                    isOutOfStock
-                                })}
+                                onClick={() => handleAddToCart()}
                                 className="btn-ghost py-4 flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                                 style={{
                                     background: addedToCart ? 'var(--color-on-surface)' : 'transparent',
