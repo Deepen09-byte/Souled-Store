@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { useProduct } from "../hook/useProducts"
+import { useCart } from "../cart/hook/useCart";
 
 // ─── Color Swatch Palette Map ──────────────────────────────────────
 const COLOR_HEX_MAP = {
@@ -276,6 +277,7 @@ const ProductDetails = () => {
     const [error, setError] = useState(false);
     const [wishlisted, setWishlisted] = useState(false);
     const [addedToCart, setAddedToCart] = useState(false);
+    const { handleAddItem } = useCart();
 
     // Selected attributes map: e.g. { size: 'XL', color: 'Terracotta' }
     const [selectedAttributes, setSelectedAttributes] = useState({});
@@ -743,8 +745,13 @@ const ProductDetails = () => {
                             <button
                                 id="btn-add-to-cart"
                                 type="button"
-                                onClick={handleAddToCart}
-                                disabled={isOutOfStock}
+                                onClick={() => handleAddToCart({
+                                    productId: product._id,
+                                    variantId: variantId,
+                                    setAddedToCart,
+                                    addedToCart,
+                                    isOutOfStock
+                                })}
                                 className="btn-ghost py-4 flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                                 style={{
                                     background: addedToCart ? 'var(--color-on-surface)' : 'transparent',
