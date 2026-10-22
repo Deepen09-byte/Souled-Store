@@ -71,7 +71,7 @@ const Cart = () => {
     useEffect(() => {
         setLoading(true);
         handleGetCart()
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => setLoading(false));
     }, []);
 
@@ -207,7 +207,7 @@ const Cart = () => {
                             className="no-underline tracking-widest uppercase font-semibold text-lg md:text-xl"
                             style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-on-surface)' }}
                         >
-                            Snitch Atelier
+                            Souled Store Atelier
                         </Link>
                     </div>
 

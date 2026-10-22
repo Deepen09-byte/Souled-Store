@@ -59,8 +59,8 @@ export default function Register() {
       >
         {/* Top bar */}
         <header className="flex items-center justify-between px-8 md:px-14 h-16 border-b" style={{ borderColor: 'var(--color-outline-variant)' }}>
-          <Link to="/" className="no-underline" style={{ fontFamily: 'var(--font-serif)', fontWeight: 500, fontSize: '1.25rem', color: 'var(--color-on-surface)', letterSpacing: '-0.01em' }}>
-            Souled Store
+          <Link to="/" className="no-underline tracking-widest uppercase font-semibold" style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-on-surface)' }}>
+            Souled Store Atelier
           </Link>
           <Link to="/login" className="label-caps no-underline" style={{ color: 'var(--color-on-surface-variant)' }}>
             Sign In
@@ -72,7 +72,7 @@ export default function Register() {
 
           {/* Headline */}
           <div className="mb-10">
-            <p className="label-caps mb-3" style={{ color: 'var(--color-secondary)' }}>Welcome to Souled Store</p>
+            <p className="label-caps mb-3" style={{ color: 'var(--color-secondary)' }}>Welcome to Souled Store Atelier</p>
             <h1 className="text-4xl md:text-5xl leading-tight" style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, color: 'var(--color-on-surface)' }}>
               Elevate Your Style
             </h1>
@@ -228,7 +228,7 @@ export default function Register() {
           </p>
 
           <p className="mt-6 text-xs text-center leading-relaxed" style={{ color: 'var(--color-outline)' }}>
-            By continuing, you agree to Souled Store's{' '}
+            By continuing, you agree to Souled Store Atelier's{' '}
             <Link to="/terms" className="underline no-underline-override" style={{ color: 'var(--color-outline)' }}>Terms</Link>
             {' '}&amp;{' '}
             <Link to="/privacy" className="underline" style={{ color: 'var(--color-outline)' }}>Privacy Policy</Link>.

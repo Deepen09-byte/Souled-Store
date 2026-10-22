@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../hook/useauth';
+import { useAuth } from '../hook/useAuth.js';
 
 export default function Login() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState('');
   const navigate = useNavigate();
   const { handleLogin } = useAuth();
 
@@ -41,8 +42,8 @@ export default function Login() {
       >
         {/* Top bar */}
         <header className="flex items-center justify-between px-8 md:px-14 h-16 border-b" style={{ borderColor: 'var(--color-outline-variant)' }}>
-          <Link to="/" className="no-underline" style={{ fontFamily: 'var(--font-serif)', fontWeight: 500, fontSize: '1.25rem', color: 'var(--color-on-surface)', letterSpacing: '-0.01em' }}>
-            Souled Store
+          <Link to="/" className="no-underline tracking-widest uppercase font-semibold" style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-on-surface)' }}>
+            Souled Store Atelier
           </Link>
           <Link to="/register" className="label-caps no-underline" style={{ color: 'var(--color-on-surface-variant)' }}>
             Sign Up
@@ -54,7 +55,7 @@ export default function Login() {
 
           {/* Headline */}
           <div className="mb-10">
-            <p className="label-caps mb-3" style={{ color: 'var(--color-secondary)' }}>Welcome to Souled Store</p>
+            <p className="label-caps mb-3" style={{ color: 'var(--color-secondary)' }}>Welcome to Souled Store Atelier</p>
             <h1 className="text-4xl md:text-5xl leading-tight" style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, color: 'var(--color-on-surface)' }}>
               Sign In
             </h1>
@@ -64,14 +65,16 @@ export default function Login() {
             className="space-y-7"
             onSubmit={async (e) => {
               e.preventDefault();
+              setLoginError('');
               try {
                 const user = await handleLogin({
-                  email: e.target.email.value,
-                  password: e.target.password.value,
+                  email: e.currentTarget.elements.namedItem('email').value,
+                  password: e.currentTarget.elements.namedItem('password').value,
                 });
                 navigate(user.isSeller ? '/seller/dashboard' : '/');
               } catch (error) {
                 console.error('Login failed:', error);
+                setLoginError(error.message || 'Invalid credentials. Please try again.');
               }
             }}
           >
@@ -128,6 +131,9 @@ export default function Login() {
             >
               Sign In
             </button>
+            {loginError && (
+              <p className="text-sm" role="alert" style={{ color: 'var(--color-error)' }}>{loginError}</p>
+            )}
           </form>
 
           {/* Divider */}
@@ -160,7 +166,7 @@ export default function Login() {
           </a>
 
           <p className="mt-10 text-sm text-center" style={{ color: 'var(--color-on-surface-variant)' }}>
-            New to Souled Store?{' '}
+            New to Souled Store Atelier?{' '}
             <Link to="/register" className="no-underline font-semibold" style={{ color: 'var(--color-on-surface)' }}>
               Create an account
             </Link>

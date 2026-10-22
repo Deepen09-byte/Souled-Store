@@ -1,5 +1,5 @@
-﻿import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useProduct } from '../hook/useProducts';
 
 export default function CreateProduct() {
@@ -18,7 +18,6 @@ export default function CreateProduct() {
     function handleImageSelect(index, e) {
         const file = e.target.files[0];
         if (!file) return;
-
         const newImages = [...images];
         const newPreviews = [...previews];
         newImages[index] = file;
@@ -40,20 +39,16 @@ export default function CreateProduct() {
     async function handleSubmit(e) {
         e.preventDefault();
         if (!title.trim() || !priceAmount) return;
-
         setIsSubmitting(true);
         try {
             const formData = new FormData();
             formData.append('title', title.trim());
             formData.append('description', description.trim());
             formData.append('priceAmount', parseFloat(priceAmount));
-            formData.append('priceCurrency', 'INR')
-            images.forEach((img) => {
-                if (img) formData.append('images', img);
-            });
-
+            formData.append('priceCurrency', 'INR');
+            images.forEach((img) => { if (img) formData.append('images', img); });
             await handleCreateProduct(formData);
-            navigate('/dashboard');
+            navigate('/seller/dashboard');
         } catch (error) {
             console.error('Failed to create product:', error);
         } finally {
@@ -64,72 +59,74 @@ export default function CreateProduct() {
     const uploadedCount = images.filter(Boolean).length;
 
     return (
-        <div className="min-h-screen bg-white font-sans antialiased">
+        <div style={{ background: "var(--color-background)", minHeight: "100dvh", color: "var(--color-on-surface)" }}>
 
-            {/* Top Navigation */}
-            <header className="border-b border-gray-100 bg-white sticky top-0 z-20">
-                <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+            {/* ── Sticky Header ── */}
+            <header
+                className="sticky top-0 z-40 border-b"
+                style={{ background: "rgba(253,252,250,0.94)", backdropFilter: "blur(12px)", borderColor: "var(--color-outline-variant)" }}
+            >
+                <div className="max-w-7xl mx-auto px-6 md:px-12 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
                         <button
                             type="button"
                             onClick={() => navigate(-1)}
-                            className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all duration-150 active:scale-95"
+                            className="p-1 cursor-pointer transition-colors"
+                            style={{ background: "none", border: "none", color: "var(--color-on-surface-variant)" }}
                             aria-label="Go back"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                                <path d="M19 12H5M12 5l-7 7 7 7" />
-                            </svg>
+                            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
                         </button>
-                        <div className="flex items-center gap-2 text-sm text-gray-400">
-                            <span className="font-semibold text-gray-800 text-base tracking-tight">Souled Store</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 text-gray-300">
-                                <path d="M9 18l6-6-6-6" />
-                            </svg>
-                            <span>Dashboard</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 text-gray-300">
-                                <path d="M9 18l6-6-6-6" />
-                            </svg>
-                            <span className="text-gray-600 font-medium">Create Product</span>
-                        </div>
+                        <Link
+                            to="/"
+                            className="no-underline tracking-widest uppercase font-semibold text-lg md:text-xl"
+                            style={{ fontFamily: "var(--font-serif)", color: "var(--color-on-surface)" }}
+                        >
+                            Souled Store Atelier
+                        </Link>
+                        <nav className="hidden md:flex items-center gap-2 text-xs label-caps" style={{ color: "var(--color-on-surface-variant)" }}>
+                            <span>/</span>
+                            <Link to="/seller/dashboard" className="no-underline hover:opacity-70 transition-opacity" style={{ color: "inherit" }}>Dashboard</Link>
+                            <span>/</span>
+                            <span style={{ color: "var(--color-secondary)" }}>Create Product</span>
+                        </nav>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={() => navigate(-1)}
-                            className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-all duration-150"
-                        >
-                            Discard
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={() => navigate(-1)}
+                        className="label-caps text-[10px] underline"
+                        style={{ background: "none", border: "none", color: "var(--color-on-surface-variant)", cursor: "pointer" }}
+                    >
+                        Discard
+                    </button>
                 </div>
             </header>
 
-            {/* Main Content */}
-            <main className="max-w-6xl mx-auto px-6 py-10">
+            {/* ── Main Content ── */}
+            <main className="max-w-7xl mx-auto px-6 md:px-12 py-10 md:py-14">
 
                 {/* Page Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                        Create Product
+                <div className="mb-10 border-b pb-6" style={{ borderColor: "var(--color-outline-variant)" }}>
+                    <span className="label-caps block mb-1" style={{ color: "var(--color-secondary)", fontSize: "10px" }}>Seller Portal</span>
+                    <h1 className="text-3xl md:text-4xl font-normal tracking-tight" style={{ fontFamily: "var(--font-serif)" }}>
+                        List New Piece
                     </h1>
-                    <p className="mt-1.5 text-base text-gray-400 font-medium">
-                        Fill in the details below to list your product on Snitch.
+                    <p className="mt-2 text-sm" style={{ color: "var(--color-on-surface-variant)" }}>
+                        Fill in the archival details below to list your garment on the Souled Store Atelier.
                     </p>
                 </div>
 
-                {/* Responsive two-column form on lg+ */}
                 <form onSubmit={handleSubmit}>
-                    <div className="flex flex-col lg:flex-row lg:gap-10 xl:gap-14">
+                    <div className="flex flex-col lg:flex-row gap-10 xl:gap-16">
 
-                        {/* Left Column: Text fields */}
-                        <div className="flex-1 min-w-0 space-y-8">
+                        {/* ── Left Column: Text Fields ── */}
+                        <div className="flex-1 min-w-0 space-y-10">
 
                             {/* Product Title */}
-                            <div className="space-y-2">
-                                <label htmlFor="product_title" className="block text-sm font-semibold text-gray-700">
-                                    Product Title
-                                    <span className="text-amber-500 ml-0.5">*</span>
+                            <div>
+                                <label htmlFor="product_title" className="label-caps block mb-3">
+                                    Product Title <span style={{ color: "var(--color-secondary)" }}>*</span>
                                 </label>
                                 <input
                                     id="product_title"
@@ -138,15 +135,16 @@ export default function CreateProduct() {
                                     required
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
-                                    placeholder="e.g. Oversized Cotton Hoodie"
-                                    className="w-full px-4 py-3.5 text-gray-900 placeholder:text-gray-300 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-amber-400 focus:ring-3 focus:ring-amber-100 transition-all duration-200 hover:border-gray-300"
+                                    placeholder="e.g. Archival Brushed Cotton Overshirt"
+                                    className="field-underline"
+                                    style={{ fontSize: "1.0625rem" }}
                                 />
-                                <p className="text-xs text-gray-400">{title.length}/100 characters</p>
+                                <p className="mt-2 text-[11px]" style={{ color: "var(--color-outline)" }}>{title.length}/100 characters</p>
                             </div>
 
                             {/* Description */}
-                            <div className="space-y-2">
-                                <label htmlFor="product_description" className="block text-sm font-semibold text-gray-700">
+                            <div>
+                                <label htmlFor="product_description" className="label-caps block mb-3">
                                     Description
                                 </label>
                                 <textarea
@@ -155,22 +153,34 @@ export default function CreateProduct() {
                                     rows={6}
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="Describe your product — material, fit, care instructions..."
-                                    className="w-full px-4 py-3.5 text-gray-900 placeholder:text-gray-300 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none focus:border-amber-400 focus:ring-3 focus:ring-amber-100 transition-all duration-200 hover:border-gray-300 resize-none leading-relaxed"
+                                    placeholder="Describe the garment — material, artisanal construction, care instructions, silhouette notes..."
+                                    style={{
+                                        border: "none",
+                                        borderBottom: "1px solid var(--color-outline-variant)",
+                                        background: "transparent",
+                                        outline: "none",
+                                        width: "100%",
+                                        padding: "10px 0",
+                                        fontSize: "0.9375rem",
+                                        color: "var(--color-on-surface)",
+                                        fontFamily: "var(--font-sans)",
+                                        resize: "none",
+                                        lineHeight: "1.7",
+                                        transition: "border-color 0.2s ease",
+                                    }}
+                                    onFocus={(e) => e.target.style.borderBottomColor = "var(--color-primary)"}
+                                    onBlur={(e) => e.target.style.borderBottomColor = "var(--color-outline-variant)"}
                                 />
-                                <p className="text-xs text-gray-400">{description.length} characters</p>
+                                <p className="mt-2 text-[11px]" style={{ color: "var(--color-outline)" }}>{description.length} characters</p>
                             </div>
 
-                            {/* Price Amount */}
-                            <div className="space-y-2">
-                                <label htmlFor="product_price" className="block text-sm font-semibold text-gray-700">
-                                    Price
-                                    <span className="text-amber-500 ml-0.5">*</span>
+                            {/* Price */}
+                            <div>
+                                <label htmlFor="product_price" className="label-caps block mb-3">
+                                    Price (INR) <span style={{ color: "var(--color-secondary)" }}>*</span>
                                 </label>
-                                <div className="flex items-stretch border border-gray-200 rounded-xl overflow-hidden hover:border-gray-300 focus-within:border-amber-400 focus-within:ring-3 focus-within:ring-amber-100 transition-all duration-200">
-                                    <div className="flex items-center px-4 bg-gray-50 border-r border-gray-200">
-                                        <span className="text-sm font-semibold text-gray-500 select-none whitespace-nowrap">INR</span>
-                                    </div>
+                                <div className="flex items-center gap-0" style={{ borderBottom: "1px solid var(--color-outline-variant)" }}>
+                                    <span className="label-caps pr-3 pb-2.5" style={{ color: "var(--color-secondary)", fontSize: "12px", borderBottom: "none" }}>₹</span>
                                     <input
                                         id="product_price"
                                         name="priceAmount"
@@ -181,14 +191,23 @@ export default function CreateProduct() {
                                         value={priceAmount}
                                         onChange={(e) => setPriceAmount(e.target.value)}
                                         placeholder="0.00"
-                                        className="flex-1 px-4 py-3.5 text-gray-900 placeholder:text-gray-300 bg-white text-sm font-medium outline-none"
+                                        style={{
+                                            border: "none",
+                                            background: "transparent",
+                                            outline: "none",
+                                            flex: 1,
+                                            padding: "10px 0",
+                                            fontSize: "1.0625rem",
+                                            color: "var(--color-on-surface)",
+                                            fontFamily: "var(--font-sans)",
+                                        }}
                                     />
                                 </div>
-                                <p className="text-xs text-gray-400">Enter the selling price in INR.</p>
+                                <p className="mt-2 text-[11px]" style={{ color: "var(--color-outline)" }}>Enter the selling price in Indian Rupees.</p>
                             </div>
 
-                            {/* Mobile-only: Images + Submit stacked below text fields */}
-                            <div className="lg:hidden space-y-8 pb-10">
+                            {/* Mobile: Images + Submit stacked below text fields */}
+                            <div className="lg:hidden space-y-10 pb-10">
                                 <ImagesPanel
                                     images={images}
                                     previews={previews}
@@ -197,18 +216,13 @@ export default function CreateProduct() {
                                     onSelect={handleImageSelect}
                                     onRemove={handleRemoveImage}
                                 />
-                                <SubmitRow
-                                    isSubmitting={isSubmitting}
-                                    title={title}
-                                    priceAmount={priceAmount}
-                                    onCancel={() => navigate(-1)}
-                                />
+                                <SubmitRow isSubmitting={isSubmitting} title={title} priceAmount={priceAmount} onCancel={() => navigate(-1)} />
                             </div>
                         </div>
 
-                        {/* Right Column: Images + Submit (desktop only, sticky) */}
-                        <div className="hidden lg:flex flex-col gap-6 w-80 xl:w-96 shrink-0">
-                            <div className="sticky top-24 space-y-6">
+                        {/* ── Right Column: Images + Submit (desktop only, sticky) ── */}
+                        <div className="hidden lg:flex flex-col gap-8 w-80 xl:w-96 shrink-0">
+                            <div className="sticky top-24 space-y-8">
                                 <ImagesPanel
                                     images={images}
                                     previews={previews}
@@ -217,12 +231,7 @@ export default function CreateProduct() {
                                     onSelect={handleImageSelect}
                                     onRemove={handleRemoveImage}
                                 />
-                                <SubmitRow
-                                    isSubmitting={isSubmitting}
-                                    title={title}
-                                    priceAmount={priceAmount}
-                                    onCancel={() => navigate(-1)}
-                                />
+                                <SubmitRow isSubmitting={isSubmitting} title={title} priceAmount={priceAmount} onCancel={() => navigate(-1)} />
                             </div>
                         </div>
 
@@ -233,25 +242,25 @@ export default function CreateProduct() {
     );
 }
 
-/* Images Panel Sub-component */
+/* ── Images Panel ──────────────────────────────────────────────────────── */
 function ImagesPanel({ images, previews, fileInputRefs, uploadedCount, onSelect, onRemove }) {
     return (
-        <div className="space-y-3">
-            <div className="flex items-center justify-between">
-                <label className="block text-sm font-semibold text-gray-700">
-                    Product Images
-                </label>
-                <span className="text-xs text-gray-400 font-medium">
-                    {uploadedCount}/4 uploaded
-                </span>
+        <div
+            className="p-6 rounded border"
+            style={{ background: "var(--color-surface)", borderColor: "var(--color-outline-variant)", boxShadow: "0 4px 20px -2px rgba(26,23,20,0.03)" }}
+        >
+            <div className="flex items-center justify-between mb-1">
+                <span className="label-caps" style={{ fontSize: "9px", color: "var(--color-secondary)" }}>Archival Photography</span>
+                <span className="label-caps text-[10px]" style={{ color: "var(--color-on-surface-variant)" }}>{uploadedCount}/4</span>
             </div>
-            <p className="text-xs text-gray-400 -mt-1">
-                Upload up to 4 images. First image will be the cover.
+            <h3 className="text-xl font-normal mb-1" style={{ fontFamily: "var(--font-serif)" }}>Product Images</h3>
+            <p className="text-xs mb-5" style={{ color: "var(--color-on-surface-variant)", lineHeight: "1.6" }}>
+                Upload up to 4 archival-quality images. The first will serve as the cover photograph.
             </p>
 
             <div className="grid grid-cols-2 gap-3">
                 {images.map((_, index) => (
-                    <div key={index} className="relative aspect-square group">
+                    <div key={index} className="relative" style={{ aspectRatio: "1/1" }}>
                         <input
                             ref={fileInputRefs[index]}
                             type="file"
@@ -262,61 +271,49 @@ function ImagesPanel({ images, previews, fileInputRefs, uploadedCount, onSelect,
                         />
 
                         {previews[index] ? (
-                            <div className="w-full h-full rounded-xl overflow-hidden border border-gray-200 relative">
-                                <img
-                                    src={previews[index]}
-                                    alt={`Product image ${index + 1}`}
-                                    className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center gap-2 rounded-xl">
+                            <div className="w-full h-full rounded border overflow-hidden relative group" style={{ borderColor: "var(--color-outline-variant)" }}>
+                                <img src={previews[index]} alt={`Product image ${index + 1}`} className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: "rgba(26,23,20,0.4)" }}>
                                     <button
                                         type="button"
                                         onClick={() => fileInputRefs[index].current?.click()}
-                                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 bg-white/90 text-gray-700 rounded-lg hover:bg-white"
+                                        className="p-1.5 rounded cursor-pointer transition-colors"
+                                        style={{ background: "rgba(253,252,250,0.9)", border: "none", color: "var(--color-on-surface)" }}
                                         aria-label="Replace image"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                            <polyline points="17 8 12 3 7 8" />
-                                            <line x1="12" y1="3" x2="12" y2="15" />
-                                        </svg>
+                                        <span className="material-symbols-outlined text-[14px]">upload</span>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => onRemove(index)}
-                                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 bg-white/90 text-red-500 rounded-lg hover:bg-white"
+                                        className="p-1.5 rounded cursor-pointer transition-colors"
+                                        style={{ background: "rgba(253,252,250,0.9)", border: "none", color: "var(--color-error)" }}
                                         aria-label="Remove image"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                                            <polyline points="3 6 5 6 21 6" />
-                                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                                            <path d="M10 11v6M14 11v6" />
-                                            <path d="M9 6V4h6v2" />
-                                        </svg>
+                                        <span className="material-symbols-outlined text-[14px]">close</span>
                                     </button>
                                 </div>
                                 {index === 0 && (
-                                    <span className="absolute top-2 left-2 bg-amber-400 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide">
-                                        Cover
-                                    </span>
+                                    <span
+                                        className="absolute top-2 left-2 label-caps text-[9px] px-1.5 py-0.5 rounded"
+                                        style={{ background: "var(--color-secondary)", color: "var(--color-on-secondary)" }}
+                                    >Cover</span>
                                 )}
                             </div>
                         ) : (
                             <label
                                 htmlFor={`image_upload_${index}`}
-                                className="flex flex-col items-center justify-center w-full h-full rounded-xl border-2 border-dashed border-gray-200 cursor-pointer hover:border-amber-300 hover:bg-amber-50/30 transition-all duration-200 group/slot"
+                                className="flex flex-col items-center justify-center w-full h-full rounded border-2 border-dashed cursor-pointer transition-all duration-200"
+                                style={{ borderColor: "var(--color-outline-variant)" }}
+                                onMouseEnter={(e) => e.currentTarget.style.borderColor = "var(--color-secondary)"}
+                                onMouseLeave={(e) => e.currentTarget.style.borderColor = "var(--color-outline-variant)"}
                             >
-                                <div className="flex flex-col items-center gap-1.5">
-                                    <div className="w-8 h-8 rounded-lg bg-gray-100 group-hover/slot:bg-amber-100 flex items-center justify-center transition-colors duration-200">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-gray-400 group-hover/slot:text-amber-500 transition-colors duration-200">
-                                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                                            <circle cx="12" cy="13" r="4" />
-                                        </svg>
-                                    </div>
-                                    <span className="text-[11px] font-medium text-gray-400 group-hover/slot:text-amber-500 transition-colors duration-200">
-                                        {index === 0 ? 'Cover' : `Photo ${index + 1}`}
-                                    </span>
-                                </div>
+                                <span className="material-symbols-outlined text-[28px] mb-1" style={{ color: "var(--color-outline)", fontVariationSettings: "'wght' 200" }}>
+                                    {index === 0 ? "add_photo_alternate" : "photo_library"}
+                                </span>
+                                <span className="label-caps text-[9px]" style={{ color: "var(--color-outline)" }}>
+                                    {index === 0 ? "Cover" : `Photo ${index + 1}`}
+                                </span>
                             </label>
                         )}
                     </div>
@@ -326,48 +323,55 @@ function ImagesPanel({ images, previews, fileInputRefs, uploadedCount, onSelect,
     );
 }
 
-/* Submit Row Sub-component */
+/* ── Submit Row ────────────────────────────────────────────────────────── */
 function SubmitRow({ isSubmitting, title, priceAmount, onCancel }) {
     return (
-        <div className="space-y-3 pt-2">
-            <div className="border-t border-gray-100" />
-            <div className="flex items-center justify-between pt-1">
-                <p className="text-xs text-gray-400">
-                    <span className="text-amber-500 font-bold">*</span> Required
-                </p>
+        <div
+            className="p-6 rounded border"
+            style={{ background: "var(--color-surface)", borderColor: "var(--color-outline-variant)", boxShadow: "0 4px 20px -2px rgba(26,23,20,0.03)" }}
+        >
+            <div className="mb-4 space-y-1.5 text-xs" style={{ color: "var(--color-on-surface-variant)" }}>
                 <div className="flex items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        disabled={isSubmitting}
-                        className="px-4 py-2.5 text-sm font-semibold text-gray-500 hover:text-gray-800 hover:bg-gray-50 rounded-xl transition-all duration-150 disabled:opacity-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting || !title.trim() || !priceAmount}
-                        id="publish_product_btn"
-                        className="flex items-center gap-2 px-6 py-2.5 bg-amber-400 hover:bg-amber-500 active:scale-[0.98] text-white text-sm font-bold rounded-xl shadow-[0_4px_14px_-4px_rgba(251,191,36,0.5)] hover:shadow-[0_6px_20px_-4px_rgba(251,191,36,0.6)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <svg className="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                </svg>
-                                <span>Publishing...</span>
-                            </>
-                        ) : (
-                            <>
-                                <span>Publish Product</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                                    <path d="M5 12h14M12 5l7 7-7 7" />
-                                </svg>
-                            </>
-                        )}
-                    </button>
+                    <span className="material-symbols-outlined text-[16px]" style={{ color: title ? "var(--color-success)" : "var(--color-outline)" }}>
+                        {title ? "check_circle" : "radio_button_unchecked"}
+                    </span>
+                    <span>Product title</span>
                 </div>
+                <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px]" style={{ color: priceAmount ? "var(--color-success)" : "var(--color-outline)" }}>
+                        {priceAmount ? "check_circle" : "radio_button_unchecked"}
+                    </span>
+                    <span>Selling price</span>
+                </div>
+            </div>
+
+            <div className="pt-4 border-t flex items-center gap-3" style={{ borderColor: "var(--color-outline-variant)" }}>
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    disabled={isSubmitting}
+                    className="btn-ghost px-5 py-3 flex-1 flex items-center justify-center rounded"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="submit"
+                    disabled={isSubmitting || !title.trim() || !priceAmount}
+                    id="publish_product_btn"
+                    className="btn-dark px-5 py-3 flex-1 flex items-center justify-center gap-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    {isSubmitting ? (
+                        <>
+                            <span className="material-symbols-outlined text-[16px] animate-spin">autorenew</span>
+                            <span>Publishing...</span>
+                        </>
+                    ) : (
+                        <>
+                            <span>Publish Piece</span>
+                            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        </>
+                    )}
+                </button>
             </div>
         </div>
     );

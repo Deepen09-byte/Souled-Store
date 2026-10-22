@@ -15,7 +15,7 @@ const Protected = ({ children, role = "buyer" }) => {
         return <Navigate to="/login" />;
     }
 
-    if (role === "buyer" && !user.isSeller) {
+    if (role === "seller" && user.isSeller) {
         return <Navigate to="/" />;
     }
     return (

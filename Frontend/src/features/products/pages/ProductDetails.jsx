@@ -89,10 +89,10 @@ const Navbar = () => {
                     </button>
                     <Link
                         to="/"
-                        className="no-underline"
-                        style={{ fontFamily: 'var(--font-serif)', fontWeight: 500, fontSize: '1.25rem', color: 'var(--color-on-surface)', letterSpacing: '-0.01em' }}
+                        className="no-underline tracking-widest uppercase font-semibold text-lg"
+                        style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-on-surface)' }}
                     >
-                        Souled Store
+                        Souled Store Atelier
                     </Link>
                 </div>
 

@@ -46,6 +46,6 @@ export const routes = createBrowserRouter([
     },
     {
         path: "/cart",
-        element: <Cart />
+        element: <Protected ><Cart /></Protected>
     }
 ])

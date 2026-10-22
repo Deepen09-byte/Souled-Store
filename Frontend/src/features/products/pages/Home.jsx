@@ -28,10 +28,10 @@ const Navbar = ({ user }) => {
                 {/* Brand */}
                 <Link
                     to="/"
-                    className="no-underline"
-                    style={{ fontFamily: 'var(--font-serif)', fontWeight: 500, fontSize: '1.35rem', color: 'var(--color-on-surface)', letterSpacing: '-0.01em' }}
+                    className="no-underline tracking-widest uppercase font-semibold text-lg"
+                    style={{ fontFamily: 'var(--font-serif)', color: 'var(--color-on-surface)' }}
                 >
-                    Souled Store
+                    Souled Store Atelier
                 </Link>
 
                 {/* Center nav links */}
@@ -289,10 +289,10 @@ const Home = () => {
                     <span
                         style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', color: 'var(--color-on-surface)', fontWeight: 400 }}
                     >
-                        Souled Store
+                        Souled Store Atelier
                     </span>
                     <p className="label-caps text-center" style={{ color: 'var(--color-outline)', fontSize: '0.625rem' }}>
-                        © {new Date().getFullYear()} Souled Store. All rights reserved.
+                        © {new Date().getFullYear()} Souled Store Atelier. All rights reserved.
                     </p>
                     <div className="flex gap-6">
                         {['Terms', 'Privacy', 'Contact'].map((link) => (

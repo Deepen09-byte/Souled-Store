@@ -309,7 +309,7 @@ export default function SellerProductDetails() {
     const outOfStockCount = variants.filter(v => (Number(v.stock) || 0) === 0).length;
 
     return (
-        <div className="min-h-screen bg-[#F7F4EF] text-[#1A1714] font-sans antialiased selection:bg-[#DDD6CB]">
+        <div style={{ minHeight: "100dvh", background: "var(--color-background)", color: "var(--color-on-surface)" }}>
 
             {/* Notification Toast */}
             {notification && (
