@@ -105,6 +105,7 @@ const Navbar = () => {
 
                 {/* Cart icon */}
                 <button
+                    onClick={() => navigate('/cart')}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-on-surface-variant)', display: 'flex', alignItems: 'center' }}
                     aria-label="Cart"
                 >

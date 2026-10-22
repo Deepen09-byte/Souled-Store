@@ -46,7 +46,19 @@ export const register = async (req, res) => {
     await sendTokenResponse(user, res, "User registered successfully.");
 
   } catch (error) {
-    console.error("Error checking existing user:", error);
+    console.error("Error during registration:", error);
+
+    if (error.code === 11000) {
+      const duplicatedField = Object.keys(error.keyPattern || {})[0];
+      const message = duplicatedField === "email"
+        ? "An account with this email already exists."
+        : duplicatedField === "contact"
+          ? "An account with this contact number already exists."
+          : "An account with these details already exists.";
+
+      return res.status(409).json({ success: false, message });
+    }
+
     return res.status(500).json({ message: "Internal server error." });
   }
 };

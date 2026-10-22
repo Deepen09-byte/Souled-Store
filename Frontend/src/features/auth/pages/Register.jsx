@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../hook/useauth';
+import { useAuth } from '../hook/useAuth.js';
 
 export default function Register() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [registrationError, setRegistrationError] = useState('');
   const navigate = useNavigate();
   const { handleRegister } = useAuth();
 
@@ -81,24 +82,32 @@ export default function Register() {
             className="space-y-7"
             onSubmit={async (e) => {
               e.preventDefault();
+              setRegistrationError('');
               try {
-                await handleRegister({
-                  email: e.target.email.value,
-                  contact: e.target.phone.value,
-                  password: e.target.password.value,
-                  fullName: e.target.name.value,
-                  isSeller: e.target.is_seller.checked,
+                const result = await handleRegister({
+                  email: e.currentTarget.elements.namedItem('email').value,
+                  contact: e.currentTarget.elements.namedItem('phone').value,
+                  password: e.currentTarget.elements.namedItem('password').value,
+                  fullName: e.currentTarget.elements.namedItem('fullName').value,
+                  isSeller: e.currentTarget.elements.namedItem('is_seller').checked,
                 });
+
+                if (result?.success === false) {
+                  setRegistrationError(result.message || 'Unable to register. Please try again.');
+                  return;
+                }
+
                 navigate('/');
               } catch (error) {
                 console.error('Registration failed:', error);
+                setRegistrationError(error.message || 'Unable to register. Please try again.');
               }
             }}
           >
             {/* Full Name */}
             <div>
               <label className="label-caps block mb-2" htmlFor="full_name">Full Name</label>
-              <input className="field-underline" id="full_name" name="name" placeholder="e.g. John Doe" required type="text" />
+              <input className="field-underline" id="full_name" name="fullName" placeholder="e.g. John Doe" required type="text" />
             </div>
 
             {/* Contact Number */}
@@ -177,6 +186,9 @@ export default function Register() {
             >
               Sign Up
             </button>
+            {registrationError && (
+              <p className="text-sm text-red-700" role="alert">{registrationError}</p>
+            )}
           </form>
 
           {/* Divider */}

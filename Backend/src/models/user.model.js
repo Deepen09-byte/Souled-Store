@@ -10,7 +10,6 @@ const userSchema = new mongoose.Schema({
   contact: {
     type: String,
     required: false,
-    unique: true,
   },
   password: {
     type: String,
@@ -30,9 +29,17 @@ const userSchema = new mongoose.Schema({
   googleId: {
     type: String,
     required: false,
-    unique: true,
   },
 });
+
+userSchema.index(
+  { contact: 1 },
+  { unique: true, partialFilterExpression: { contact: { $type: "string" } } },
+);
+userSchema.index(
+  { googleId: 1 },
+  { unique: true, partialFilterExpression: { googleId: { $type: "string" } } },
+);
 
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;

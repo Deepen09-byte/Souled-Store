@@ -62,12 +62,13 @@ const Navbar = ({ user }) => {
                     >
                         <span className="material-symbols-outlined" style={{ fontSize: '20px', fontVariationSettings: "'wght' 300" }}>favorite</span>
                     </button>
-                    <button
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-on-surface-variant)' }}
+                    <Link
+                        to="/cart"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-on-surface-variant)', display: 'flex', alignItems: 'center' }}
                         aria-label="Cart"
                     >
                         <span className="material-symbols-outlined" style={{ fontSize: '20px', fontVariationSettings: "'wght' 300" }}>shopping_bag</span>
-                    </button>
+                    </Link>
 
                     {user ? (
                         <div

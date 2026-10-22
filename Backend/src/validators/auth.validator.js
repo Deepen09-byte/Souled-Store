@@ -4,7 +4,12 @@ function validateRequest(req, res, next) {
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        const [error] = errors.array();
+        return res.status(400).json({
+            success: false,
+            message: error.msg,
+            field: error.path,
+        });
     }
 
     next();
@@ -13,9 +18,15 @@ function validateRequest(req, res, next) {
 export const validateRegister = [
   body("email").isEmail().withMessage("Please provide a valid email address."),
   body("contact")
+    .isString()
+    .withMessage("Contact number must be a string.")
+    .bail()
     .notEmpty()
     .withMessage("Contact number is required.")
-    .isMobilePhone(),
+    .bail()
+    .customSanitizer((value) => value.replace(/[\s()-]/g, ""))
+    .isMobilePhone()
+    .withMessage("Please provide a valid contact number."),
   body("password")
     .isLength({ min: 6 })
     .withMessage("Password must be at least 6 characters long."),
@@ -31,5 +42,6 @@ export const validateLogin = [
   body("password")
     .isLength({ min: 6 })
     .withMessage("Password must be at least 6 characters long."),
-    validateRequest
+
+  validateRequest
 ];

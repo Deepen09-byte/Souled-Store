@@ -1,4 +1,4 @@
-import { setUser, setLoading, setError } from "../state/auth.slice.js"
+import { setUser, setLoading } from "../state/auth.slice.js"
 import { register, login, getMe } from "../service/auth.api.js"
 import { useDispatch } from "react-redux"
 
@@ -22,16 +22,27 @@ export const useAuth = () => {
             isSeller
         });
 
+        if (!data.success) {
+            return data;
+        }
+
         dispatch(setUser(data.user));
 
         return data.user;
     }
+
 
     async function handleLogin({ email, password }) {
         const data = await login({ email, password });
+
+        if (!data.success) {
+            return data;
+        }
+
         dispatch(setUser(data.user));
         return data.user;
     }
+
 
     async function handleGetMe() {
         try {
