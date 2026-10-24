@@ -21,3 +21,10 @@ export const validateIncrementQuantity = [
     body("quantity").optional().isInt({ min: 1 }).withMessage("Quantity must be at least 1"),
     validateRequest
 ]
+
+export const validatedecrementQuantity = [
+    param("id").isMongoId().withMessage("Invalid product ID"),
+    param("variantId").isMongoId().withMessage("Invalid variant ID"),
+    body("quantity").optional().isInt({ min: 1 }).withMessage("Quantity must be at least 1"),
+    validateRequest
+]

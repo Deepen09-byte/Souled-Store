@@ -98,3 +98,92 @@ export const incrementCartQuantity = async (req, res) => {
         { new: true }
     );  
 }
+
+
+export const decrementCartQuantity = async (req, res) => {
+  try {
+    const { id, variantId } = req.params;
+
+    const product = await productModel.findOne({
+      _id: id,
+      "variants._id": variantId,
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Product or variant not found",
+        success: false,
+      });
+    }
+
+    const cart = await cartModel.findOne({
+      user: req.user._id,
+    });
+
+    if (!cart) {
+      return res.status(404).json({
+        message: "Cart not found",
+        success: false,
+      });
+    }
+
+    const cartItem = cart.items.find(
+      (item) =>
+        item.product.toString() === id &&
+        item.variant.toString() === variantId
+    );
+
+    if (!cartItem) {
+      return res.status(404).json({
+        message: "Item not found in cart",
+        success: false,
+      });
+    }
+
+    if (cartItem.quantity <= 1) {
+      return res.status(400).json({
+        message: "Cannot decrement quantity below 1",
+        success: false,
+      });
+    }
+
+    const updatedCart = await cartModel.findOneAndUpdate(
+      {
+        user: req.user._id,
+        items: {
+          $elemMatch: {
+            product: id,
+            variant: variantId,
+            quantity: { $gt: 1 },
+          },
+        },
+      },
+      {
+        $inc: { "items.$.quantity": -1 },
+      },
+      {
+        new: true,
+      }
+    );
+
+    if (!updatedCart) {
+      return res.status(409).json({
+        message: "Cart item could not be updated. Please try again.",
+        success: false,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Cart quantity decreased successfully",
+      success: true,
+      cart: updatedCart,
+    });
+  } catch (error) {
+    console.error("Error decrementing cart quantity:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+    });
+  }
+};

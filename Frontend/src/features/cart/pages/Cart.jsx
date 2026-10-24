@@ -57,7 +57,7 @@ const Cart = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const cartItems = useSelector((state) => state.cart?.items || []);
-    const { handleGetCart, handleIncrementCartItem } = useCart();
+    const { handleGetCart, handleIncrementCartItem, handleDecrementCartItem } = useCart();
 
     const [loading, setLoading] = useState(true);
     const [localQuantities, setLocalQuantities] = useState({});
@@ -472,7 +472,12 @@ const Cart = () => {
                                                     >
                                                         <button
                                                             type="button"
-                                                            onClick={() => updateQuantity(key, -1)}
+                                                            onClick={() => {
+                                                                updateQuantity(key, -1);
+                                                                if (handleDecrementCartItem && productId && variantId) {
+                                                                    handleDecrementCartItem(productId, variantId);
+                                                                }
+                                                            }}
                                                             aria-label="Decrease quantity"
                                                             className="w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-black/5 transition-colors border-none"
                                                             style={{ color: 'var(--color-on-surface-variant)' }}
