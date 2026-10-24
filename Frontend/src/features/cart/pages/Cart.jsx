@@ -57,7 +57,7 @@ const Cart = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const cartItems = useSelector((state) => state.cart?.items || []);
-    const { handleGetCart } = useCart();
+    const { handleGetCart, handleIncrementCartItem } = useCart();
 
     const [loading, setLoading] = useState(true);
     const [localQuantities, setLocalQuantities] = useState({});
@@ -359,15 +359,21 @@ const Cart = () => {
                                 }}
                             >
                                 {cartItems.map((item, index) => {
-                                    const key = item._id || `${item.product?._id || item.product}-${item.variant || index}`;
-                                    const qty = localQuantities[key] || item.quantity || 1;
                                     const product = typeof item.product === 'object' ? item.product : null;
-                                    const productTitle = product?.title || 'Bespoke Atelier Garment';
+                                    const rawProductId = product?._id || (typeof item.product === 'string' ? item.product : null) || item.productId;
+                                    const rawVariantId = item.variant?._id || (typeof item.variant === 'string' ? item.variant : null) || item.variantId;
 
                                     // Find variant if present
                                     const variant = product?.variants?.find(
-                                        (v) => (v._id?.toString() || v._id) === (item.variant?.toString() || item.variant)
-                                    );
+                                        (v) => (v._id?.toString() || String(v._id)) === (rawVariantId?.toString() || String(rawVariantId))
+                                    ) || (typeof item.variant === 'object' ? item.variant : null);
+
+                                    const productId = rawProductId || product?._id;
+                                    const variantId = rawVariantId || variant?._id;
+
+                                    const key = item._id || `${productId || 'prod'}-${variantId || index}`;
+                                    const qty = localQuantities[key] || item.quantity || 1;
+                                    const productTitle = product?.title || 'Bespoke Atelier Garment';
                                     const variantAttrs = getAttributesObject(variant?.attributes);
                                     const colorAttr = variantAttrs.color || variantAttrs.Color || '';
                                     const sizeAttr = variantAttrs.size || variantAttrs.Size || '';
@@ -478,7 +484,12 @@ const Cart = () => {
                                                         </span>
                                                         <button
                                                             type="button"
-                                                            onClick={() => updateQuantity(key, 1)}
+                                                            onClick={() => {
+                                                                updateQuantity(key, 1);
+                                                                if (handleIncrementCartItem && productId && variantId) {
+                                                                    handleIncrementCartItem(productId, variantId);
+                                                                }
+                                                            }}
                                                             aria-label="Increase quantity"
                                                             className="w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-black/5 transition-colors border-none"
                                                             style={{ color: 'var(--color-on-surface-variant)' }}

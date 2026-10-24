@@ -14,6 +14,15 @@ export const useCart = () => {
         }
     }
 
+    async function handleIncrementCartItem(productId, variantId) {
+        try {
+            await addItem({ productId, variantId });
+            await handleGetCart();
+        } catch (error) {
+            console.error("Error incrementing cart item:", error);
+        }
+    }
+
     async function handleGetCart() {
         try {
             const data = await getCart();
@@ -27,5 +36,5 @@ export const useCart = () => {
         }
     }
 
-    return { handleAddItem, handleGetCart }
+    return { handleAddItem, handleIncrementCartItem, handleGetCart }
 }

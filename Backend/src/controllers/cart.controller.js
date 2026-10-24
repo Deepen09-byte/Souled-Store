@@ -68,3 +68,33 @@ export const getCart = async (req, res) => {
     return res.status(200).json({ message: "Cart retrieved successfully", success: true, cart });
     
 }
+
+export const incrementCartQuantity = async (req, res) => {
+    const { id, variantId } = req.params;
+
+    const product = await productModel.findOne({ _id: id, "variants._id": variantId });
+
+    if (!product) {
+        return res.status(404).json({ message: "Product or variant not found", success: false });
+    }
+
+    const cart = await cartModel.findOne({ user: req.user._id });
+
+    if (!cart) {
+        return res.status(404).json({ message: "Cart not found", success: false });
+    }
+
+    const stock = await stockCheck(id, variantId, 1);
+
+    const itemQuantity = cart.items.find(item => item.product.toString() === id && item.variant.toString() === variantId)?.quantity || 0;
+
+    if (itemQuantity + 1 > stock) {
+        return res.status(400).json({ message: "Cannot increment quantity beyond available stock", success: false });
+    }
+
+    await cartModel.findOneAndUpdate(
+        { user: req.user._id, "items.product": id, "items.variant": variantId },
+        { $inc: { "items.$.quantity": 1 } },
+        { new: true }
+    );  
+}
