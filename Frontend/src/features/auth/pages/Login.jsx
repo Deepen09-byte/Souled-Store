@@ -71,7 +71,7 @@ export default function Login() {
                   email: e.currentTarget.elements.namedItem('email').value,
                   password: e.currentTarget.elements.namedItem('password').value,
                 });
-                navigate(user.isSeller ? '/seller/dashboard' : '/');
+                navigate(user.role === "seller" ? '/seller/dashboard' : '/');
               } catch (error) {
                 console.error('Login failed:', error);
                 setLoginError(error.message || 'Invalid credentials. Please try again.');
