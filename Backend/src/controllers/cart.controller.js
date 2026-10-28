@@ -84,7 +84,7 @@ export const getCart = async (req, res) => {
   let cart = await cartModel.aggregate([
     {
       $match: {
-        user: ObjectId("6ad9cff9eed253ebc371e3df"),
+        user: new mongoose.Types.ObjectId(user._id),
       },
     },
     { $unwind: { path: "$items" } },
