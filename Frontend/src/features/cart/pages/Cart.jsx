@@ -56,17 +56,12 @@ function getAttributesObject(attributes) {
 const Cart = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const cartItems = useSelector((state) => state.cart?.items || []);
+    const cart = useSelector((state) => state.cart);
+    const cartItems = cart?.items || [];
     const { handleGetCart, handleIncrementCartItem, handleDecrementCartItem } = useCart();
 
     const [loading, setLoading] = useState(true);
     const [localQuantities, setLocalQuantities] = useState({});
-    const [promoCode, setPromoCode] = useState("FIRST10");
-    const [promoApplied, setPromoApplied] = useState(true);
-    const [promoDiscountRate, setPromoDiscountRate] = useState(0.1); // 10%
-    const [giftCardChecked, setGiftCardChecked] = useState(true);
-    const [unboxingChecked, setUnboxingChecked] = useState(true);
-    const [crossSellAdded, setCrossSellAdded] = useState({});
 
     useEffect(() => {
         setLoading(true);
@@ -77,9 +72,9 @@ const Cart = () => {
 
     // Synchronize quantities into local state
     useEffect(() => {
-        if (cartItems.length > 0) {
+        if (cart.items.length > 0) {
             const initialQtys = {};
-            cartItems.forEach((item, index) => {
+            cart.items.forEach((item, index) => {
                 const key = item._id || `${item.product?._id || item.product}-${item.variant || index}`;
                 initialQtys[key] = item.quantity || 1;
             });
@@ -100,50 +95,6 @@ const Cart = () => {
     const handleRemove = (itemId) => {
         dispatch(removeItem(itemId));
     };
-
-    // Curated companion pieces
-    const crossSellItems = [
-        {
-            id: 'xs-1',
-            title: 'Silk Twill Pocket Square',
-            category: 'Archival botanical print',
-            price: 1900,
-            image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=400&q=80',
-        },
-        {
-            id: 'xs-2',
-            title: 'Handcrafted Nubuck Belt',
-            category: 'Vegetable-tanned finish',
-            price: 4200,
-            image: 'https://images.unsplash.com/photo-1624222247344-550fb60583dc?auto=format&fit=crop&w=400&q=80',
-        },
-    ];
-
-    // Compute financial figures
-    const subtotal = useMemo(() => {
-        let total = 0;
-        cartItems.forEach((item, index) => {
-            const key = item._id || `${item.product?._id || item.product}-${item.variant || index}`;
-            const qty = localQuantities[key] || item.quantity || 1;
-            const price = item.price?.amount ?? item.product?.price?.amount ?? 0;
-            total += price * qty;
-        });
-
-        // Add any added cross-sell pieces
-        crossSellItems.forEach((xs) => {
-            if (crossSellAdded[xs.id]) {
-                total += xs.price;
-            }
-        });
-
-        return total;
-    }, [cartItems, localQuantities, crossSellAdded]);
-
-    const discountAmount = promoApplied ? Math.round(subtotal * promoDiscountRate) : 0;
-    const freeDeliveryThreshold = 15000;
-    const distanceToFreeDelivery = Math.max(0, freeDeliveryThreshold - subtotal);
-    const freeDeliveryProgress = Math.min(100, Math.round((subtotal / freeDeliveryThreshold) * 100));
-    const estimatedTotal = Math.max(0, subtotal - discountAmount);
 
     const formatINR = (val) =>
         new Intl.NumberFormat('en-IN', {

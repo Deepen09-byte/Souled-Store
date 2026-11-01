@@ -16,7 +16,7 @@ export const useCart = () => {
 
     async function handleGetCart() {
         const data = await getCart();
-        dispatch(setItems(data.cart.items));
+        dispatch(setItems(data.cart));
     }
 
     async function handleIncrementCartItem(productId, variantId) {

@@ -1,6 +1,7 @@
 import cartModel from "../models/cart.model.js";
 import productModel from "../models/product.model.js";
 import { stockCheck } from "../dao/product.dao.js";
+import mongoose from "mongoose";
 
 export const addToCart = async (req, res) => {
   const { id, variantId } = req.params;
@@ -81,56 +82,56 @@ export const addToCart = async (req, res) => {
 export const getCart = async (req, res) => {
   const user = req.user;
 
-  let cart = await cartModel.aggregate([
-    {
-      $match: {
-        user: new mongoose.Types.ObjectId(user._id),
-      },
-    },
-    { $unwind: { path: "$items" } },
-    {
-      $lookup: {
-        from: "products",
-        localField: "items.product",
-        foreignField: "_id",
-        as: "items.product",
-      },
-    },
-    { $unwind: { path: "$items.product" } },
-    {
-      $unwind: { path: "$items.product.variants" },
-    },
-    {
-      $match: {
-        $expr: {
-          $eq: ["$items.variant", "$items.product.variants._id"],
+    let cart = (await cartModel.aggregate([
+      {
+        $match: {
+          user: new mongoose.Types.ObjectId(user._id),
         },
       },
-    },
-    {
-      $addFields: {
-        itemPrice: {
-          price: {
-            $multiply: [
-              "$items.quantity",
-              "$items.product.variants.price.amount",
-            ],
+      { $unwind: { path: "$items" } },
+      {
+        $lookup: {
+          from: "products",
+          localField: "items.product",
+          foreignField: "_id",
+          as: "items.product",
+        },
+      },
+      { $unwind: { path: "$items.product" } },
+      {
+        $unwind: { path: "$items.product.variants" },
+      },
+      {
+        $match: {
+          $expr: {
+            $eq: ["$items.variant", "$items.product.variants._id"],
           },
-          currency: "$items.product.variants.price.currency",
         },
       },
-    },
-    {
-      $group: {
-        _id: "$_id",
-        totalPrice: { $sum: "$itemPrice.price" },
-        currency: {
-          $first: "$itemPrice.currency",
+      {
+        $addFields: {
+          itemPrice: {
+            price: {
+              $multiply: [
+                "$items.quantity",
+                "$items.product.variants.price.amount",
+              ],
+            },
+            currency: "$items.product.variants.price.currency",
+          },
         },
-        items: { $push: "$items" },
       },
-    },
-  ]);
+      {
+        $group: {
+          _id: "$_id",
+          totalPrice: { $sum: "$itemPrice.price" },
+          currency: {
+            $first: "$itemPrice.currency",
+          },
+          items: { $push: "$items" },
+        },
+      },
+    ])[0]);
 
   if (!cart) {
     cart = await cartModel.create({ user: user._id, items: [] });
