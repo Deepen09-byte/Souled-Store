@@ -3,8 +3,8 @@ import { createSlice } from "@reduxjs/toolkit";
 const cartSlice = createSlice({
     name: "cart",
     initialState: {
-        totalPrice: null,
-        currency: null,
+        totalPrice: 0,
+        currency: "INR",
         items: [],
     },
     reducers: {
@@ -14,38 +14,55 @@ const cartSlice = createSlice({
             state.currency = action.payload?.currency ?? "INR";
         },
         addItem: (state, action) => {
-            state.items.push(action.payload)
+            state.items.push(action.payload);
         },
         removeItem: (state, action) => {
-            state.items = state.items.filter((item) => item.id !== action.payload)
+            const targetId = String(action.payload);
+            state.items = state.items.filter((item) => {
+                const id = item._id || item.id || item.product?._id || item.product;
+                return String(id) !== targetId;
+            });
         },
         incrementCartItem: (state, action) => {
             const { productId, variantId } = action.payload;
-            const items = state.items.find(item => item.productId === productId && item.variantId === variantId);
+            const item = state.items.find((i) => {
+                const pId = i.product?._id || i.product || i.productId;
+                const vId = i.variant?._id || i.variant || i.variantId;
+                return (
+                    String(pId) === String(productId) &&
+                    (!variantId || String(vId) === String(variantId))
+                );
+            });
 
-            state.items = state.items.map(item => {
-                if (item.id === productId && item.variantId === variantId) {
-                    return { ...item, quantity: item.quantity + 1 }
-                } else {
-                    return item;
+            if (item) {
+                item.quantity = (item.quantity || 0) + 1;
+                const unitPrice = item.price?.amount ?? item.variant?.price?.amount ?? item.product?.price?.amount ?? 0;
+                if (typeof state.totalPrice === "number") {
+                    state.totalPrice += unitPrice;
                 }
-            })
+            }
         },
         decrementCartItem: (state, action) => {
             const { productId, variantId } = action.payload;
-            const items = state.items.find(item => item.productId === productId && item.variantId === variantId);
+            const item = state.items.find((i) => {
+                const pId = i.product?._id || i.product || i.productId;
+                const vId = i.variant?._id || i.variant || i.variantId;
+                return (
+                    String(pId) === String(productId) &&
+                    (!variantId || String(vId) === String(variantId))
+                );
+            });
 
-            state.items = state.items.map(item => {
-                if (item.id === productId && item.variantId === variantId) {
-                    return { ...item, quantity: item.quantity - 1 }
-                } else {
-                    return item;
+            if (item && item.quantity > 1) {
+                item.quantity -= 1;
+                const unitPrice = item.price?.amount ?? item.variant?.price?.amount ?? item.product?.price?.amount ?? 0;
+                if (typeof state.totalPrice === "number") {
+                    state.totalPrice = Math.max(0, state.totalPrice - unitPrice);
                 }
-            })
-        }
-    }
-})
+            }
+        },
+    },
+});
 
 export const { setItems, addItem, removeItem, incrementCartItem, decrementCartItem } = cartSlice.actions;
 export default cartSlice.reducer;
-

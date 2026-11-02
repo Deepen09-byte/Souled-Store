@@ -9,25 +9,50 @@ export const useCart = () => {
         try {
             await addItem({ productId, variantId });
             dispatch(addItemToCart({ productId, variantId }));
+            await handleGetCart();
         } catch (error) {
             console.error("Error adding item to cart:", error);
         }
     }
 
     async function handleGetCart() {
-        const data = await getCart();
-        dispatch(setItems(data.cart));
+        try {
+            const response = await getCart();
+            const cartData = response?.data?.cart ?? response?.cart;
+
+            if (!cartData || !Array.isArray(cartData.items)) {
+                throw new Error("Invalid cart response structure");
+            }
+
+            dispatch(setItems(cartData));
+            return cartData;
+        } catch (error) {
+            console.error("Error fetching cart:", error);
+            throw error;
+        }
     }
 
     async function handleIncrementCartItem(productId, variantId) {
-        const data = await incrementCartItemApi({ productId, variantId });
-        dispatch(incrementCartItem({ productId, variantId }));
+        try {
+            dispatch(incrementCartItem({ productId, variantId }));
+            await incrementCartItemApi({ productId, variantId });
+            await handleGetCart();
+        } catch (error) {
+            console.error("Error incrementing cart item:", error);
+            await handleGetCart().catch(() => { });
+        }
     }
 
     async function handleDecrementCartItem(productId, variantId) {
-        const data = await decrementCartItemApi({ productId, variantId });
-        dispatch(decrementCartItem({ productId, variantId }));
+        try {
+            dispatch(decrementCartItem({ productId, variantId }));
+            await decrementCartItemApi({ productId, variantId });
+            await handleGetCart();
+        } catch (error) {
+            console.error("Error decrementing cart item:", error);
+            await handleGetCart().catch(() => { });
+        }
     }
 
-    return { handleAddItem, handleGetCart, handleIncrementCartItem, handleDecrementCartItem }
-}
+    return { handleAddItem, handleGetCart, handleIncrementCartItem, handleDecrementCartItem };
+};

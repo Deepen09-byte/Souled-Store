@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../hook/useCart";
@@ -58,10 +58,12 @@ const Cart = () => {
     const dispatch = useDispatch();
     const cart = useSelector((state) => state.cart);
     const cartItems = cart?.items || [];
+    const totalPrice = cart?.totalPrice ?? 0;
+    const currency = cart?.currency || "INR";
+
     const { handleGetCart, handleIncrementCartItem, handleDecrementCartItem } = useCart();
 
     const [loading, setLoading] = useState(true);
-    const [localQuantities, setLocalQuantities] = useState({});
 
     useEffect(() => {
         setLoading(true);
@@ -69,27 +71,6 @@ const Cart = () => {
             .catch(() => { })
             .finally(() => setLoading(false));
     }, []);
-
-    // Synchronize quantities into local state
-    useEffect(() => {
-        if (cart.items.length > 0) {
-            const initialQtys = {};
-            cart.items.forEach((item, index) => {
-                const key = item._id || `${item.product?._id || item.product}-${item.variant || index}`;
-                initialQtys[key] = item.quantity || 1;
-            });
-            setLocalQuantities(initialQtys);
-        }
-    }, [cartItems]);
-
-    // Quantity update handler
-    const updateQuantity = (key, delta) => {
-        setLocalQuantities((prev) => {
-            const current = prev[key] || 1;
-            const updated = Math.max(1, current + delta);
-            return { ...prev, [key]: updated };
-        });
-    };
 
     // Item remove handler
     const handleRemove = (itemId) => {
@@ -99,9 +80,9 @@ const Cart = () => {
     const formatINR = (val) =>
         new Intl.NumberFormat('en-IN', {
             style: 'currency',
-            currency: 'INR',
+            currency: currency,
             maximumFractionDigits: 0,
-        }).format(val);
+        }).format(val || 0);
 
     return (
         <div style={{ background: 'var(--color-background)', minHeight: '100dvh', color: 'var(--color-on-surface)' }}>
@@ -118,9 +99,9 @@ const Cart = () => {
                         <span className="material-symbols-outlined text-[16px]" style={{ color: 'var(--color-secondary)' }}>
                             workspace_premium
                         </span>
-                        Archival Release: Complimentary express courier & bespoke presentation coffret on orders above ₹15,000.
+                        Archival Release: Complimentary express courier & bespoke presentation on all orders.
                     </span>
-                    <span className="md:hidden mx-auto font-medium">Complimentary Bespoke Courier on orders above ₹15,000</span>
+                    <span className="md:hidden mx-auto font-medium">Complimentary Bespoke Courier</span>
                     <div className="hidden md:flex items-center gap-6">
                         <span className="flex items-center gap-1 font-semibold tracking-widest text-[10px] uppercase">
                             <span className="material-symbols-outlined text-[14px]">call</span> Atelier Concierge
@@ -249,57 +230,8 @@ const Cart = () => {
                 ) : (
                     /* ── 2-Column Cart Layout ── */
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-                        {/* ── LEFT COLUMN: Bag Items & Atelier Extras (8 cols) ── */}
+                        {/* ── LEFT COLUMN: Bag Items (8 cols) ── */}
                         <section className="lg:col-span-8 space-y-8">
-                            {/* Free Delivery Milestone Progress Bar */}
-                            <div
-                                className="p-6 rounded border"
-                                style={{
-                                    background: 'var(--color-surface)',
-                                    borderColor: 'var(--color-outline-variant)',
-                                    boxShadow: '0 4px 20px -2px rgba(26,23,20,0.03)',
-                                }}
-                            >
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="flex items-center gap-2.5">
-                                        <span className="material-symbols-outlined text-xl" style={{ color: 'var(--color-secondary)' }}>
-                                            local_shipping
-                                        </span>
-                                        <span className="text-sm font-medium">
-                                            {distanceToFreeDelivery > 0 ? (
-                                                <>
-                                                    You are <strong className="font-semibold text-black">{formatINR(distanceToFreeDelivery)}</strong> away from Complimentary Express Delivery & Signature Gift Packaging
-                                                </>
-                                            ) : (
-                                                <span style={{ color: 'var(--color-success)' }} className="font-semibold">
-                                                    ✨ Complimentary Express Delivery & Signature Coffret Unlocked!
-                                                </span>
-                                            )}
-                                        </span>
-                                    </div>
-                                    <span className="label-caps hidden sm:inline" style={{ color: 'var(--color-secondary)', fontSize: '10px' }}>
-                                        {freeDeliveryProgress}% Achieved
-                                    </span>
-                                </div>
-
-                                {/* Progress Bar */}
-                                <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--color-surface-container)' }}>
-                                    <div
-                                        className="h-full rounded-full transition-all duration-700 ease-out"
-                                        style={{
-                                            width: `${freeDeliveryProgress}%`,
-                                            background: 'var(--color-secondary)',
-                                        }}
-                                    />
-                                </div>
-                                <div className="flex justify-between items-center mt-2.5 text-[11px]" style={{ color: 'var(--color-on-surface-variant)' }}>
-                                    <span>Tier: Sovereign Courier (₹15,000 threshold)</span>
-                                    <span className="font-medium text-black">
-                                        {distanceToFreeDelivery > 0 ? `Unlocked at ${formatINR(freeDeliveryThreshold)}` : 'Complimentary'}
-                                    </span>
-                                </div>
-                            </div>
-
                             {/* Bag Item List */}
                             <div
                                 className="rounded border divide-y overflow-hidden"
@@ -323,7 +255,7 @@ const Cart = () => {
                                     const variantId = rawVariantId || variant?._id;
 
                                     const key = item._id || `${productId || 'prod'}-${variantId || index}`;
-                                    const qty = localQuantities[key] || item.quantity || 1;
+                                    const qty = item.quantity || 1;
                                     const productTitle = product?.title || 'Bespoke Atelier Garment';
                                     const variantAttrs = getAttributesObject(variant?.attributes);
                                     const colorAttr = variantAttrs.color || variantAttrs.Color || '';
@@ -396,7 +328,7 @@ const Cart = () => {
                                                             )}
                                                             <span className="opacity-40">·</span>
                                                             <span className="font-mono text-[10px] opacity-60">
-                                                                SKU: SN-{key.substring(0, 6).toUpperCase()}
+                                                                SKU: SN-{String(key).substring(0, 6).toUpperCase()}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -423,14 +355,14 @@ const Cart = () => {
                                                     >
                                                         <button
                                                             type="button"
+                                                            disabled={qty <= 1}
                                                             onClick={() => {
-                                                                updateQuantity(key, -1);
-                                                                if (handleDecrementCartItem && productId && variantId) {
+                                                                if (qty > 1 && productId && variantId) {
                                                                     handleDecrementCartItem(productId, variantId);
                                                                 }
                                                             }}
                                                             aria-label="Decrease quantity"
-                                                            className="w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-black/5 transition-colors border-none"
+                                                            className="w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-black/5 transition-colors border-none disabled:opacity-30 disabled:cursor-not-allowed"
                                                             style={{ color: 'var(--color-on-surface-variant)' }}
                                                         >
                                                             <span className="material-symbols-outlined text-[14px]">remove</span>
@@ -441,8 +373,7 @@ const Cart = () => {
                                                         <button
                                                             type="button"
                                                             onClick={() => {
-                                                                updateQuantity(key, 1);
-                                                                if (handleIncrementCartItem && productId && variantId) {
+                                                                if (productId && variantId) {
                                                                     handleIncrementCartItem(productId, variantId);
                                                                 }
                                                             }}
@@ -466,7 +397,7 @@ const Cart = () => {
                                                         </button>
                                                         <button
                                                             type="button"
-                                                            onClick={() => handleRemove(item._id || item.product?._id || item.product)}
+                                                            onClick={() => handleRemove(item._id || productId)}
                                                             className="flex items-center gap-1.5 cursor-pointer underline underline-offset-4 hover:text-red-700 transition-colors"
                                                             style={{ color: 'var(--color-on-surface-variant)', background: 'none', border: 'none' }}
                                                         >
@@ -479,149 +410,6 @@ const Cart = () => {
                                         </article>
                                     );
                                 })}
-                            </div>
-
-                            {/* Atelier Concierge & Gifting Options */}
-                            <div
-                                className="p-6 sm:p-8 rounded border"
-                                style={{
-                                    background: 'var(--color-surface)',
-                                    borderColor: 'var(--color-outline-variant)',
-                                    boxShadow: '0 4px 20px -2px rgba(26,23,20,0.03)',
-                                }}
-                            >
-                                <div className="flex items-center gap-3 mb-2">
-                                    <span className="material-symbols-outlined text-2xl" style={{ color: 'var(--color-secondary)' }}>
-                                        featured_seasonal_and_gifts
-                                    </span>
-                                    <h3 className="text-xl font-normal" style={{ fontFamily: 'var(--font-serif)' }}>
-                                        Atelier Concierge Gifting & Packaging
-                                    </h3>
-                                </div>
-                                <p className="text-xs mb-6 max-w-2xl" style={{ color: 'var(--color-on-surface-variant)', lineHeight: '1.6' }}>
-                                    Every garment arrives enclosed in archival non-acidic tissue and protective garment bags. Choose custom presentation protocols below:
-                                </p>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Option 1 */}
-                                    <label
-                                        className="relative flex items-start gap-3.5 p-4 border rounded cursor-pointer transition-colors"
-                                        style={{
-                                            background: giftCardChecked ? 'var(--color-surface-container-low)' : 'transparent',
-                                            borderColor: giftCardChecked ? 'var(--color-secondary)' : 'var(--color-outline-variant)',
-                                        }}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={giftCardChecked}
-                                            onChange={(e) => setGiftCardChecked(e.target.checked)}
-                                            className="mt-0.5 accent-black"
-                                        />
-                                        <div>
-                                            <span className="block text-xs font-semibold text-black">
-                                                Complimentary Calligraphy Gift Card
-                                            </span>
-                                            <span className="block text-[11px] mt-0.5" style={{ color: 'var(--color-on-surface-variant)' }}>
-                                                Pen-lettered parchment on handmade cotton card stock.
-                                            </span>
-                                            <span className="label-caps mt-2 block" style={{ color: 'var(--color-secondary)', fontSize: '9px' }}>
-                                                Complimentary
-                                            </span>
-                                        </div>
-                                    </label>
-
-                                    {/* Option 2 */}
-                                    <label
-                                        className="relative flex items-start gap-3.5 p-4 border rounded cursor-pointer transition-colors"
-                                        style={{
-                                            background: unboxingChecked ? 'var(--color-surface-container-low)' : 'transparent',
-                                            borderColor: unboxingChecked ? 'var(--color-secondary)' : 'var(--color-outline-variant)',
-                                        }}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={unboxingChecked}
-                                            onChange={(e) => setUnboxingChecked(e.target.checked)}
-                                            className="mt-0.5 accent-black"
-                                        />
-                                        <div>
-                                            <span className="block text-xs font-semibold text-black">
-                                                Discreet Luxury Unboxing Presentation
-                                            </span>
-                                            <span className="block text-[11px] mt-0.5" style={{ color: 'var(--color-on-surface-variant)' }}>
-                                                Neutral exterior seal with cedar scent sachet & brass hanger.
-                                            </span>
-                                            <span className="label-caps mt-2 block" style={{ color: 'var(--color-secondary)', fontSize: '9px' }}>
-                                                Included
-                                            </span>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-
-                            {/* Complete the Silhouette (Artisanal Accents) */}
-                            <div>
-                                <div className="flex items-center justify-between mb-4">
-                                    <div>
-                                        <span className="label-caps block" style={{ color: 'var(--color-secondary)', fontSize: '9px' }}>
-                                            Artisanal Accents
-                                        </span>
-                                        <h3 className="text-xl font-normal" style={{ fontFamily: 'var(--font-serif)' }}>
-                                            Complete the Silhouette
-                                        </h3>
-                                    </div>
-                                    <span className="text-xs hidden sm:inline" style={{ color: 'var(--color-on-surface-variant)' }}>
-                                        Handcrafted companion pieces
-                                    </span>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {crossSellItems.map((xs) => {
-                                        const isAdded = Boolean(crossSellAdded[xs.id]);
-                                        return (
-                                            <div
-                                                key={xs.id}
-                                                className="p-4 rounded border flex items-center justify-between gap-4 transition-colors"
-                                                style={{
-                                                    background: 'var(--color-surface)',
-                                                    borderColor: isAdded ? 'var(--color-secondary)' : 'var(--color-outline-variant)',
-                                                }}
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-16 h-20 rounded overflow-hidden flex-shrink-0 border" style={{ borderColor: 'var(--color-outline-variant)' }}>
-                                                        <img src={xs.image} alt={xs.title} className="w-full h-full object-cover" />
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="text-sm font-medium leading-tight">{xs.title}</h4>
-                                                        <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-on-surface-variant)' }}>
-                                                            {xs.category}
-                                                        </p>
-                                                        <p className="text-xs font-semibold mt-1" style={{ color: 'var(--color-primary)' }}>
-                                                            {formatINR(xs.price)}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setCrossSellAdded((prev) => ({
-                                                            ...prev,
-                                                            [xs.id]: !prev[xs.id],
-                                                        }))
-                                                    }
-                                                    className="label-caps px-3 py-2 rounded transition-all cursor-pointer text-[10px]"
-                                                    style={{
-                                                        background: isAdded ? 'var(--color-primary)' : 'var(--color-surface-container)',
-                                                        color: isAdded ? 'var(--color-on-primary)' : 'var(--color-on-surface)',
-                                                        border: '1px solid var(--color-outline-variant)',
-                                                    }}
-                                                >
-                                                    {isAdded ? '✓ Added' : '+ Add'}
-                                                </button>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
                             </div>
                         </section>
 
@@ -648,19 +436,9 @@ const Cart = () => {
                                 {/* Price Ledger Breakdown */}
                                 <div className="space-y-3.5 text-xs md:text-sm">
                                     <div className="flex justify-between items-center" style={{ color: 'var(--color-on-surface-variant)' }}>
-                                        <span>Item Subtotal ({cartItems.length} garments)</span>
-                                        <span className="font-medium text-black tabular-nums">{formatINR(subtotal)}</span>
+                                        <span>Item Subtotal ({cartItems.length} {cartItems.length === 1 ? 'garment' : 'garments'})</span>
+                                        <span className="font-medium text-black tabular-nums">{formatINR(totalPrice)}</span>
                                     </div>
-
-                                    {promoApplied && (
-                                        <div className="flex justify-between items-center" style={{ color: 'var(--color-secondary)' }}>
-                                            <span className="flex items-center gap-1.5">
-                                                <span className="material-symbols-outlined text-[16px]">stars</span>
-                                                <span>Atelier Member Privilege (10%)</span>
-                                            </span>
-                                            <span className="tabular-nums font-semibold">-{formatINR(discountAmount)}</span>
-                                        </div>
-                                    )}
 
                                     <div className="flex justify-between items-center" style={{ color: 'var(--color-on-surface-variant)' }}>
                                         <span className="flex items-center gap-1">
@@ -670,13 +448,13 @@ const Cart = () => {
                                             </span>
                                         </span>
                                         <span className="label-caps font-semibold" style={{ color: 'var(--color-secondary)', fontSize: '10px' }}>
-                                            {distanceToFreeDelivery === 0 ? 'Complimentary' : 'Calculated next'}
+                                            Complimentary
                                         </span>
                                     </div>
 
                                     <div className="flex justify-between items-center" style={{ color: 'var(--color-on-surface-variant)' }}>
                                         <span>Taxes & Artisan Surcharges</span>
-                                        <span className="label-caps text-[10px] opacity-60">Included (12%)</span>
+                                        <span className="label-caps text-[10px] opacity-60">Included</span>
                                     </div>
 
                                     <div className="pt-4 border-t flex justify-between items-baseline" style={{ borderColor: 'var(--color-outline-variant)' }}>
@@ -689,66 +467,9 @@ const Cart = () => {
                                             </span>
                                         </div>
                                         <span className="text-2xl md:text-3xl font-normal text-black tabular-nums tracking-tight" style={{ fontFamily: 'var(--font-serif)' }}>
-                                            {formatINR(estimatedTotal)}
+                                            {formatINR(totalPrice)}
                                         </span>
                                     </div>
-                                </div>
-
-                                {/* Promo Code Input & Chip */}
-                                <div className="mt-6 pt-6 border-t" style={{ borderColor: 'var(--color-outline-variant)' }}>
-                                    <label htmlFor="promo" className="label-caps block mb-2" style={{ fontSize: '10px' }}>
-                                        Voucher or Archival Pass
-                                    </label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            id="promo"
-                                            type="text"
-                                            value={promoCode}
-                                            onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                                            placeholder="ENTER PROMO"
-                                            className="w-full border px-3 py-2 text-xs uppercase tracking-wider rounded focus:outline-none"
-                                            style={{
-                                                background: 'var(--color-surface-container)',
-                                                borderColor: 'var(--color-outline-variant)',
-                                                color: 'var(--color-on-surface)',
-                                            }}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                if (promoCode.trim()) {
-                                                    setPromoApplied(true);
-                                                }
-                                            }}
-                                            className="btn-dark px-4 py-2 rounded text-[10px]"
-                                        >
-                                            Apply
-                                        </button>
-                                    </div>
-
-                                    {/* Applied Voucher Chip */}
-                                    {promoApplied && (
-                                        <div
-                                            className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs"
-                                            style={{
-                                                background: 'var(--color-surface-container)',
-                                                color: 'var(--color-secondary)',
-                                                border: '1px solid var(--color-outline-variant)',
-                                            }}
-                                        >
-                                            <span className="material-symbols-outlined text-[13px]">check_circle</span>
-                                            <span className="label-caps text-[9px]">{promoCode} Applied (-10%)</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => setPromoApplied(false)}
-                                                className="ml-1 cursor-pointer opacity-60 hover:opacity-100"
-                                                style={{ background: 'none', border: 'none' }}
-                                                aria-label="Remove promo code"
-                                            >
-                                                <span className="material-symbols-outlined text-[12px]">close</span>
-                                            </button>
-                                        </div>
-                                    )}
                                 </div>
 
                                 {/* Checkout CTA */}

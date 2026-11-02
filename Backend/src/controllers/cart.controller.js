@@ -80,66 +80,177 @@ export const addToCart = async (req, res) => {
 };
 
 export const getCart = async (req, res) => {
-  const user = req.user;
+  try {
+    const userId = new mongoose.Types.ObjectId(req.user._id);
 
-    let cart = (await cartModel.aggregate([
+    let [cart] = await cartModel.aggregate([
       {
         $match: {
-          user: new mongoose.Types.ObjectId(user._id),
+          user: userId,
         },
       },
-      { $unwind: { path: "$items" } },
+
+      // Preserve the cart even if items is empty
+      {
+        $unwind: {
+          path: "$items",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      // Find the product for each cart item
       {
         $lookup: {
           from: "products",
           localField: "items.product",
           foreignField: "_id",
-          as: "items.product",
+          as: "productData",
         },
       },
-      { $unwind: { path: "$items.product" } },
+
       {
-        $unwind: { path: "$items.product.variants" },
-      },
-      {
-        $match: {
-          $expr: {
-            $eq: ["$items.variant", "$items.product.variants._id"],
-          },
+        $unwind: {
+          path: "$productData",
+          preserveNullAndEmptyArrays: true,
         },
       },
+
+      // Find the matching variant inside the product
       {
         $addFields: {
-          itemPrice: {
-            price: {
-              $multiply: [
-                "$items.quantity",
-                "$items.product.variants.price.amount",
-              ],
-            },
-            currency: "$items.product.variants.price.currency",
+          variantData: {
+            $arrayElemAt: [
+              {
+                $filter: {
+                  input: { $ifNull: ["$productData.variants", []] },
+                  as: "variant",
+                  cond: {
+                    $eq: ["$$variant._id", "$items.variant"],
+                  },
+                },
+              },
+              0,
+            ],
           },
         },
       },
+
+      // Calculate each item's total price
+      {
+        $addFields: {
+          itemTotal: {
+            $multiply: [
+              { $ifNull: ["$items.quantity", 0] },
+              {
+                $ifNull: [
+                  "$variantData.price.amount",
+                  "$items.price.amount",
+                ],
+              },
+            ],
+          },
+          itemCurrency: {
+            $ifNull: [
+              "$variantData.price.currency",
+              "$items.price.currency",
+            ],
+          },
+        },
+      },
+
+      // Rebuild the cart
       {
         $group: {
           _id: "$_id",
-          totalPrice: { $sum: "$itemPrice.price" },
-          currency: {
-            $first: "$itemPrice.currency",
+          user: { $first: "$user" },
+
+          totalPrice: {
+            $sum: "$itemTotal",
           },
-          items: { $push: "$items" },
+
+          currency: {
+            $first: "$itemCurrency",
+          },
+
+          items: {
+            $push: {
+              $cond: [
+                { $ifNull: ["$items.product", false] },
+                {
+                  _id: "$items._id",
+                  product: "$productData",
+                  variant: "$variantData",
+                  quantity: "$items.quantity",
+                  price: {
+                    amount: {
+                      $ifNull: [
+                        "$variantData.price.amount",
+                        "$items.price.amount",
+                      ],
+                    },
+                    currency: {
+                      $ifNull: [
+                        "$variantData.price.currency",
+                        "$items.price.currency",
+                      ],
+                    },
+                  },
+                },
+                null,
+              ],
+            },
+          },
         },
       },
-    ])[0]);
 
-  if (!cart) {
-    cart = await cartModel.create({ user: user._id, items: [] });
+      // Remove null entries for empty carts
+      {
+        $project: {
+          _id: 1,
+          user: 1,
+          totalPrice: 1,
+          currency: { $ifNull: ["$currency", "INR"] },
+          items: {
+            $filter: {
+              input: "$items",
+              as: "item",
+              cond: { $ne: ["$$item", null] },
+            },
+          },
+        },
+      },
+    ]);
+
+    // Create a cart only if no cart document exists
+    if (!cart) {
+      const newCart = await cartModel.create({
+        user: userId,
+        items: [],
+      });
+
+      cart = {
+        _id: newCart._id,
+        user: newCart.user,
+        items: [],
+        totalPrice: 0,
+        currency: "INR",
+      };
+    }
+
+    return res.status(200).json({
+      message: "Cart retrieved successfully",
+      success: true,
+      cart,
+    });
+  } catch (error) {
+    console.error("Get cart error:", error);
+
+    return res.status(500).json({
+      message: "Failed to retrieve cart",
+      success: false,
+      error: error.message,
+    });
   }
-
-  return res
-    .status(200)
-    .json({ message: "Cart retrieved successfully", success: true, cart });
 };
 
 export const incrementCartQuantity = async (req, res) => {
@@ -184,6 +295,11 @@ export const incrementCartQuantity = async (req, res) => {
     { $inc: { "items.$.quantity": 1 } },
     { new: true },
   );
+
+  return res.status(200).json({
+    message: "Cart quantity increased successfully",
+    success: true,
+  });
 };
 
 export const decrementCartQuantity = async (req, res) => {
