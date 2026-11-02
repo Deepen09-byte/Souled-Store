@@ -484,46 +484,6 @@ const Cart = () => {
                                         </span>
                                         <span>Proceed to Secure Checkout</span>
                                     </button>
-
-                                    {/* Direct Express Checkout */}
-                                    <div className="relative py-2 text-center">
-                                        <div className="absolute inset-0 flex items-center">
-                                            <span className="w-full border-t" style={{ borderColor: 'var(--color-outline-variant)' }} />
-                                        </div>
-                                        <span
-                                            className="relative px-3 label-caps text-[9px]"
-                                            style={{ background: 'var(--color-surface)' }}
-                                        >
-                                            Direct Express Checkout
-                                        </span>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-2.5">
-                                        <button
-                                            type="button"
-                                            onClick={() => alert("Initiating Apple Pay...")}
-                                            className="flex items-center justify-center gap-1.5 py-2.5 border rounded cursor-pointer transition-colors text-xs font-medium"
-                                            style={{
-                                                borderColor: 'var(--color-outline-variant)',
-                                                background: 'var(--color-surface)',
-                                            }}
-                                        >
-                                            <span className="material-symbols-outlined text-[16px]">phone_iphone</span>
-                                            <span>Apple Pay</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => alert("Initiating UPI Direct...")}
-                                            className="flex items-center justify-center gap-1.5 py-2.5 border rounded cursor-pointer transition-colors text-xs font-medium"
-                                            style={{
-                                                borderColor: 'var(--color-outline-variant)',
-                                                background: 'var(--color-surface)',
-                                            }}
-                                        >
-                                            <span className="material-symbols-outlined text-[16px]">account_balance_wallet</span>
-                                            <span>UPI Direct</span>
-                                        </button>
-                                    </div>
                                 </div>
 
                                 {/* Trust & Security Badges */}
