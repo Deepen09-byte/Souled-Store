@@ -60,8 +60,21 @@ const Cart = () => {
     const cartItems = cart?.items || [];
     const totalPrice = cart?.totalPrice ?? 0;
     const currency = cart?.currency || "INR";
+    const user = useSelector((state) => state.auth.user);
 
-    const { handleGetCart, handleIncrementCartItem, handleDecrementCartItem } = useCart();
+    const { handleGetCart, handleIncrementCartItem, handleDecrementCartItem, handleCheckout } = useCart();
+
+    const handleCheckoutClick = async () => {
+        try {
+            const order = await handleCheckout();
+
+            console.log("Checkout successful:", order);
+
+            // Navigate to your order/success page here
+        } catch (error) {
+            console.error("Checkout failed:", error);
+        }
+    };
 
     const [loading, setLoading] = useState(true);
 
@@ -476,7 +489,7 @@ const Cart = () => {
                                 <div className="mt-8 space-y-3">
                                     <button
                                         type="button"
-                                        onClick={() => alert("Proceeding to secure atelier checkout...")}
+                                        onClick={handleCheckoutClick}
                                         className="w-full btn-dark py-4 px-6 rounded flex items-center justify-center gap-2 group shadow-lg"
                                     >
                                         <span className="material-symbols-outlined text-[16px] group-hover:scale-110 transition-transform" style={{ color: 'var(--color-accent)' }}>

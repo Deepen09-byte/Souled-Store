@@ -24,3 +24,8 @@ export const decrementCartItemApi = async ({ productId, variantId }) => {
     const response = await cartApiInstance.patch(`/quantity/decrement/${productId}/${variantId}`);
     return response.data;
 }
+
+export const checkoutApi = async () => {
+    const response = await cartApiInstance.post(`/checkout`);
+    return response.data;
+}

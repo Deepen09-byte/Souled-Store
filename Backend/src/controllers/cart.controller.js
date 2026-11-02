@@ -2,6 +2,7 @@ import cartModel from "../models/cart.model.js";
 import productModel from "../models/product.model.js";
 import { stockCheck } from "../dao/product.dao.js";
 import mongoose from "mongoose";
+import { checkout } from "../services/payment.service.js";
 
 export const addToCart = async (req, res) => {
   const { id, variantId } = req.params;
@@ -388,3 +389,15 @@ export const decrementCartQuantity = async (req, res) => {
     });
   }
 };
+
+export const checkoutController = async (req, res) => {
+
+  const order = await checkout({ amount: 1000, currency: "INR" });  
+
+  return res.status(200).json({
+    message: "Checkout initiated successfully",
+    success: true,
+    order,
+  });
+
+}
