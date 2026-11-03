@@ -74,6 +74,28 @@ const Cart = () => {
         } catch (error) {
             console.error("Checkout failed:", error);
         }
+
+        const options = {
+            key: "YOUR_RAZORPAY_KEY",
+            amount: order.amount,
+            currency: order.currency,
+            name: "Souled Store Atelier",
+            description: "Test Transaction",
+            order_id: order.id,
+            handler: (response) => {
+                console.log(response);
+                alert("Payment Successful!");
+            },
+            prefill: {
+                name: user?.fullname,
+                email: user?.email,
+                contact: user?.contact,
+            },
+            theme: {
+                color: tokens.primary,
+            },
+        };
+
     };
 
     const [loading, setLoading] = useState(true);
