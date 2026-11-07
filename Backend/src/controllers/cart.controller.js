@@ -4,6 +4,7 @@ import { stockCheck } from "../dao/product.dao.js";
 import mongoose from "mongoose";
 import { checkout } from "../services/payment.service.js";
 import { getCartDetails } from "../dao/cart.dao.js";
+import paymentModel from "../models/payment.model.js";
 
 
 export const addToCart = async (req, res) => {
@@ -269,6 +270,29 @@ export const checkoutController = async (req, res) => {
   }
 
   const order = await checkout({ amount: cart.totalPrice, currency: cart.currency });  
+
+  const payment = await paymentModel.create({
+    user: req.user._id,
+    razorpay: {
+      orderId: order.id,
+    },
+    price: {
+      amount: cart.totalPrice,
+      currency: cart.currency,
+    },
+    orderItems: cart.items.map(item => ({
+      title: item.product.title,
+      productId: item.product._id,
+      variantId: item.variant._id,
+      quantity: item.quantity,
+      description: item.product.description,
+      image: item.product.images,
+      price: {
+        amount: item.variant.price.amount || item.product.price.amount,
+        currency: item.variant.price.currency || item.product.price.currency,
+      },
+    })),
+  });
 
   return res.status(200).json({
     message: "Checkout initiated successfully",
