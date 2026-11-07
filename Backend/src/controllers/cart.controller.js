@@ -288,8 +288,8 @@ export const checkoutController = async (req, res) => {
       description: item.product.description,
       image: item.product.images,
       price: {
-        amount: item.variant.price.amount || item.product.price.amount,
-        currency: item.variant.price.currency || item.product.price.currency,
+        amount: item.product.variant.price.amount || item.product.price.amount,
+        currency: item.product.variant.price.currency || item.product.price.currency,
       },
     })),
   });
