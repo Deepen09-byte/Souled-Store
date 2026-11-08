@@ -29,3 +29,14 @@ export const checkoutApi = async () => {
     const response = await cartApiInstance.post(`/checkout`);
     return response.data;
 }
+
+export const verifyCartOrderApi = async ({ razorpay_order_id, razorpay_payment_id, razorpay_signature }) => {
+    const response = await cartApiInstance.post("/payment/verify/order", {
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature
+    })
+
+    return response.data
+
+}   

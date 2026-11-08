@@ -62,7 +62,7 @@ const Cart = () => {
     const currency = cart?.currency || "INR";
     const user = useSelector((state) => state.auth.user);
 
-    const { handleGetCart, handleIncrementCartItem, handleDecrementCartItem, handleCheckout } = useCart();
+    const { handleGetCart, handleIncrementCartItem, handleDecrementCartItem, handleCheckout, handleVerifyCartOrder } = useCart();
 
     const handleCheckoutClick = async () => {
         try {
@@ -82,12 +82,17 @@ const Cart = () => {
             name: "Souled Store Atelier",
             description: "Test Transaction",
             order_id: order.id,
-            handler: (response) => {
-                console.log(response);
+            handler: async (response) => {
+                const isValid = await handleVerifyCartOrder(response);
+
+                if (isValid) {
+                    navigate(`/order-success?order_id=${response?.razorpay_order_id}`);
+                }
+
                 alert("Payment Successful!");
             },
             prefill: {
-                name: user?.fullname,
+                name: user?.fullName,
                 email: user?.email,
                 contact: user?.contact,
             },
