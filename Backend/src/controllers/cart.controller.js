@@ -290,8 +290,8 @@ export const checkoutController = async (req, res) => {
       description: item.product.description,
       image: item.product.images,
       price: {
-        amount: item.product.variant.price.amount || item.product.price.amount,
-        currency: item.product.variant.price.currency || item.product.price.currency,
+          amount: item.price.amount,
+          currency: item.price.currency,
       },
     })),
   });
