@@ -64,84 +64,90 @@ const Cart = () => {
 
     const { handleGetCart, handleIncrementCartItem, handleDecrementCartItem, handleCheckout, handleVerifyCartOrder } = useCart();
 
+
     const handleCheckoutClick = async () => {
         try {
-            let order = null;
-            if (handleCheckout) {
-                try {
-                    order = await handleCheckout();
-                    console.log("Checkout response:", order);
-                } catch (err) {
-                    console.warn("Backend checkout API warning:", err);
-                }
+            if (!window.Razorpay) {
+                throw new Error("Razorpay SDK is not loaded. Check index.html.");
             }
 
-            // If Razorpay SDK is loaded on window and order object exists with razorpay key
-            if (window.Razorpay && order?.id) {
-                const options = {
-                    key: order.key || "YOUR_RAZORPAY_KEY",
-                    amount: order.amount,
-                    currency: order.currency || "INR",
-                    name: "Souled Store Atelier",
-                    description: "Atelier Curated Order",
-                    order_id: order.id,
-                    handler: async (response) => {
-                        let isValid = true;
-                        if (handleVerifyCartOrder) {
-                            try {
-                                isValid = await handleVerifyCartOrder(response);
-                            } catch (e) {
-                                console.warn("Verification warning:", e);
-                            }
+            if (typeof handleCheckout !== "function") {
+                throw new Error("handleCheckout is not available from useCart.");
+            }
+
+            const order = await handleCheckout();
+
+            if (!order?.id) {
+                throw new Error("Backend did not return a valid Razorpay order ID.");
+            }
+
+            const options = {
+                key: "rzp_test_TxzvFzXRr1myLh",
+                amount: order.amount,
+                currency: order.currency || "INR",
+                name: "Souled Store Atelier",
+                description: "Atelier Curated Order",
+                order_id: order.id,
+
+                handler: async (response) => {
+                    try {
+                        if (typeof handleVerifyCartOrder !== "function") {
+                            throw new Error("Payment verification handler is missing.");
                         }
 
-                        if (isValid) {
-                            navigate(`/order-success?order_id=${response?.razorpay_order_id || order.id}`, {
+                        const result = await handleVerifyCartOrder(response);
+
+                        if (!result?.success) {
+                            throw new Error("Payment verification failed.");
+                        }
+
+                        navigate(
+                            `/order-success?order_id=${response.razorpay_order_id}`,
+                            {
                                 state: {
                                     cartItems,
                                     totalPrice,
                                     currency,
-                                    orderId: response?.razorpay_order_id || order.id,
+                                    orderId: response.razorpay_order_id,
                                     paymentMethod: "Razorpay Gateway",
                                 },
-                            });
-                        }
-                    },
-                    prefill: {
-                        name: user?.fullName || "",
-                        email: user?.email || "",
-                        contact: user?.contact || "",
-                    },
-                    theme: {
-                        color: "#1c1c19",
-                    },
-                };
+                            }
+                        );
 
-                const rzp = new window.Razorpay(options);
-                rzp.open();
-                return;
-            }
-
-            // Direct fallback navigation to Order Success for immediate testing
-            navigate("/order-success", {
-                state: {
-                    cartItems,
-                    totalPrice,
-                    currency,
-                    orderId: `SN-${Math.floor(100000 + Math.random() * 900000)}-DEL`,
-                    orderDate: new Date().toLocaleDateString("en-IN", {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                    }) + " • " + new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) + " IST",
-                    paymentMethod: "Sovereign UPI / Encrypted",
+                    } catch (error) {
+                        console.error("Payment verification error:", error);
+                        alert("Payment verification failed. Please contact support.");
+                    }
                 },
+
+                prefill: {
+                    name: user?.fullName || "",
+                    email: user?.email || "",
+                    contact: user?.contact || "",
+                },
+
+                modal: {
+                    ondismiss: () => {
+                        console.log("Razorpay checkout closed.");
+                    },
+                },
+
+                theme: {
+                    color: "#1c1c19",
+                },
+            };
+
+            const razorpay = new window.Razorpay(options);
+
+            razorpay.on("payment.failed", (response) => {
+                console.error("Razorpay payment failed:", response.error);
             });
+
+            razorpay.open();
+
         } catch (error) {
             console.error("Checkout process error:", error);
-            navigate("/order-success", {
-                state: { cartItems, totalPrice, currency },
-            });
+            alert(error.message || "Unable to initiate checkout.");
         }
     };
 

@@ -59,9 +59,16 @@ export const useCart = () => {
         return data.order
     }
 
-    async function handleVerifyCartOrder(razorpay_order_id, razorpay_payment_id, razorpay_signature) {
-        const data = await verifyCartOrderApi({ razorpay_order_id, razorpay_payment_id, razorpay_signature })
-        return data.success
+    async function handleVerifyCartOrder(response) {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = response;
+
+        const result = await verifyCartOrderApi({
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+        });
+
+        return result;
     }
 
     return { handleAddItem, handleGetCart, handleIncrementCartItem, handleDecrementCartItem, handleCheckout, handleVerifyCartOrder };

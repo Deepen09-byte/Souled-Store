@@ -6,7 +6,7 @@ import { checkout } from "../services/payment.service.js";
 import { getCartDetails } from "../dao/cart.dao.js";
 import paymentModel from "../models/payment.model.js";
 import {validatePaymentVerification}  from "razorpay/dist/utils/razorpay-utils.js";
-import { config } from "dotenv";
+import { config } from "../config/config.js";
 
 
 export const addToCart = async (req, res) => {
@@ -337,7 +337,7 @@ export const verifyOrderController = async (req, res) => {
     });
   } 
 
-  payment.status = "completed";
+  payment.status = "paid";
 
   payment.razorpay.paymentId = razorpay_payment_id;
   payment.razorpay.signature = razorpay_signature;
