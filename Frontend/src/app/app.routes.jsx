@@ -13,7 +13,7 @@ import OrderSuccess from "../features/cart/pages/OrderSuccess"
 export const routes = createBrowserRouter([
     {
         path: "/",
-        element: <Home />
+        element: <Protected role="buyer"><Home /></Protected>
     },
     {
         path: "/register",

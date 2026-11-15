@@ -2,7 +2,7 @@ import React from "react";
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router";
 
-const Protected = ({ children, role = "seller" }) => {
+const Protected = ({ children, role }) => {
 
     const user = useSelector((state) => state.auth.user);
     const loading = useSelector((state) => state.auth.loading);
@@ -12,17 +12,18 @@ const Protected = ({ children, role = "seller" }) => {
     }
 
     if (!user) {
-        return <Navigate to="/login" />;
+        return <Navigate to="/login" replace />;
     }
 
-    if (role === "seller" && !user.role === "seller") {
-        return <Navigate to="/" />;
+    if (role === "seller" && user.role !== "seller") {
+        return <Navigate to="/" replace />;
     }
 
-    return (
-        children
-    );
+    if (role === "buyer" && user.role !== "buyer") {
+        return <Navigate to="/seller/dashboard" replace />;
+    }
 
-}
+    return children;
+};
 
 export default Protected;
