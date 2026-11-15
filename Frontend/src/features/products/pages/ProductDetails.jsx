@@ -769,17 +769,6 @@ const ProductDetails = () => {
                                 </span>
                                 {addedToCart ? 'Added to Bag' : isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
                             </button>
-
-                            {/* Buy Now */}
-                            <button
-                                id="btn-buy-now"
-                                type="button"
-                                disabled={isOutOfStock}
-                                className="btn-dark py-4 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                                <span className="material-symbols-outlined" style={{ fontSize: '16px', fontVariationSettings: "'wght' 300" }}>bolt</span>
-                                {isOutOfStock ? 'Unavailable' : 'Buy Now'}
-                            </button>
                         </div>
 
                         {/* Wishlist */}

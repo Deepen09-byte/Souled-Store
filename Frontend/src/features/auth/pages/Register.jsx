@@ -97,7 +97,7 @@ export default function Register() {
                   return;
                 }
 
-                navigate('/');
+                navigate(user.role === "seller" ? '/seller/dashboard' : '/');
               } catch (error) {
                 console.error('Registration failed:', error);
                 setRegistrationError(error.message || 'Unable to register. Please try again.');
