@@ -101,6 +101,8 @@ const Cart = () => {
                             throw new Error("Payment verification failed.");
                         }
 
+                        await handleGetCart()
+
                         navigate(
                             `/order-success?order_id=${response.razorpay_order_id}`,
                             {
