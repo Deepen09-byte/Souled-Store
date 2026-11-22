@@ -344,6 +344,11 @@ export const verifyOrderController = async (req, res) => {
 
   await payment.save();
 
+  await cartModel.findOneAndUpdate(
+  { user: req.user._id },
+  { $set: { items: [] } }
+  );
+
   return res.status(200).json({
     message: "Payment verified and order completed successfully",
     success: true,
